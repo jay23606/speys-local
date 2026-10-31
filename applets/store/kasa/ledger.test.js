@@ -16,6 +16,12 @@ test("an invalid entry is not written", () => {
   assert.equal(l.entries.length, 0);
 });
 
+test("entry amounts retain sub-cent precision", () => {
+  const l = emptyLedger();
+  saveEntry(l, entry({ amount: 0.001 }));
+  assert.equal(l.entries[0].amount, 0.001);
+});
+
 test("editing keeps the id, a missing entry cannot be edited", () => {
   const l = emptyLedger();
   const { id } = saveEntry(l, entry());

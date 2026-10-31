@@ -32,7 +32,7 @@ function validCore(input) {
   return {
     direction: input.direction,
     title: title.slice(0, 200),
-    amount: Math.round(amount * 100) / 100,
+    amount,
     category: String(input.category || "other"),
     counterparty: String(input.counterparty ?? "").trim() || null,
   };
