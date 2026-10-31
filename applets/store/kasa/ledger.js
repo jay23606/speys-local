@@ -25,9 +25,10 @@ function validDate(value) {
 
 function validCore(input) {
   const title = String(input.title ?? "").trim();
-  const amount = Number(input.amount);
+  const rawAmount = Number(input.amount);
+  const amount = Math.round(rawAmount * 100) / 100;
   if (!title) throw new Error("Title is required");
-  if (!(amount > 0) || !Number.isFinite(amount)) throw new Error("Amount must be greater than zero");
+  if (!(amount > 0) || !Number.isFinite(rawAmount)) throw new Error("Amount must be greater than zero");
   if (input.direction !== "in" && input.direction !== "out") throw new Error("Invalid direction");
   return {
     direction: input.direction,

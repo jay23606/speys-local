@@ -16,10 +16,12 @@ test("an invalid entry is not written", () => {
   assert.equal(l.entries.length, 0);
 });
 
-test("entry amounts retain sub-cent precision", () => {
+test("entry amounts round to cents and reject values that round to zero", () => {
   const l = emptyLedger();
-  saveEntry(l, entry({ amount: 0.001 }));
-  assert.equal(l.entries[0].amount, 0.001);
+  saveEntry(l, entry({ amount: 1.239 }));
+  assert.equal(l.entries[0].amount, 1.24);
+  assert.throws(() => saveEntry(l, entry({ amount: 0.004 })), /Amount/);
+  assert.equal(l.entries.length, 1);
 });
 
 test("editing keeps the id, a missing entry cannot be edited", () => {
