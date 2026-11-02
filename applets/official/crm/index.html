@@ -25,11 +25,16 @@ async function refresh() {
 }
 document.documentElement.style.setProperty("--ust", "0px");
 // —— CRM ————————————————————————
-// Layout: business → pipeline tabs → board with a column per stage; dragging a card changes its stage,
-// clicking one opens the record panel on the right (preview first, fields after "Edit").
+// Layout: the Agenda (pinned records of every business, by urgency) or business → pipeline tabs → board with a
+// column per stage; dragging a card changes its stage, clicking one opens the record panel on the right
+// (preview first, fields after "Edit").
 let crm = null;
 const view = { business: localStorage.getItem("panel.crmIsletme") || "", pipeline: localStorage.getItem("panel.crmHat") || "",
-  selected: null, edit: false, meeting: false, add: false };
+  selected: null, edit: false, meeting: false, add: false,
+  agenda: localStorage.getItem("panel.crmGorunum") !== "pano", showClosed: false };
+const setAgenda = (on) => { view.agenda = on; localStorage.setItem("panel.crmGorunum", on ? "gundem" : "pano"); };
+const PIN = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M14.6 2.6a1 1 0 0 1 1.4 0l5.4 5.4a1 1 0 0 1-.4 1.660l-2.700.9-3.700 3.700-.5 4a1 1 0 0 1-1.700.6l-3.600-3.600-5.100 5.100-1.400-1.400 5.100-5.100-3.600-3.600a1 1 0 0 1 .6-1.700l4-.5 3.700-3.700.9-2.700a1 1 0 0 1 .3-.4Z"/></svg>';
+const pinButton = (deal) => `<button type="button" class="crm-igne${deal.gundem ? " on" : ""}" data-is="crm-gundem" data-id="${esc(deal.id)}" title="${esc(deal.gundem ? t("Remove from agenda") : t("Add to agenda"))}" aria-pressed="${deal.gundem ? "true" : "false"}">${PIN}</button>`;
 const MEETING_KINDS = { visit: t("Visit"), call: t("Call"), meeting: t("Meeting"), email: t("Email"), note: t("Note") };
 async function loadCrm() { crm = await getJson("./api/crm"); }
 async function writeCrm(body) {
@@ -56,21 +61,49 @@ function dealCard(deal) {
   const contact = deal.contact_name || deal.contact_role;
   // On a closed record (won / lost) a past date is not a warning.
   const closed = crm.asamalar.find((s) => s.pipeline_id === deal.pipeline_id && s.key === deal.stage)?.kind !== "open";
-  return `<button type="button" class="crm-kart${view.selected === deal.id ? " secili" : ""}" draggable="true" data-is="crm-sec" data-id="${esc(deal.id)}">
+  const meta = [contact ? esc(contact) : "", deal.assignee ? `@${esc(deal.assignee)}` : ""].filter(Boolean).join(" · ");
+  return `<div class="crm-kart${view.selected === deal.id ? " secili" : ""}${deal.gundem ? " gundemde" : ""}" role="button" tabindex="0" draggable="true" data-is="crm-sec" data-id="${esc(deal.id)}">
+    ${pinButton(deal)}
     <b>${esc(dealName(deal))}</b>
-    <span class="crm-meta">${[
-      deal.place_district ? `📍 ${esc(deal.place_district)}` : "",
-      contact ? `👤 ${esc(contact)}` : "",
-      deal.son_gorusme ? `<span title="${esc(t("Last meeting"))}">↺ ${shortDate(deal.son_gorusme)}</span>` : "",
-      deal.assignee ? `@${esc(deal.assignee)}` : "",
-    ].filter(Boolean).join(" · ")}</span>
-    ${deal.next_action_at || deal.next_action ? `<span class="crm-vade ${deal.next_action_at && !closed ? dueClass(deal.next_action_at) : ""}">${deal.next_action_at ? `📅 ${shortDate(deal.next_action_at)}` : ""}${deal.next_action_at && deal.next_action ? " · " : ""}${esc(deal.next_action || "")}</span>` : ""}
-  </button>`;
+    ${meta ? `<span class="crm-meta">${meta}</span>` : ""}
+    ${deal.next_action_at || deal.next_action ? `<span class="crm-vade ${deal.next_action_at && !closed ? dueClass(deal.next_action_at) : ""}" title="${esc(deal.next_action || "")}">${deal.next_action_at ? `<em>${shortDate(deal.next_action_at)}</em> ` : ""}${esc(deal.next_action || "")}</span>` : ""}
+  </div>`;
+}
+
+/** The people to think about now, from every business, most urgent first. */
+function renderAgenda() {
+  const pinned = crm.kayitlar.filter((d) => d.gundem);
+  const groups = [
+    [t("Overdue"), "gecikti", (d) => d.next_action_at && daysUntil(d.next_action_at) < 0],
+    [t("Today"), "bugun", (d) => d.next_action_at && daysUntil(d.next_action_at) === 0],
+    [t("Upcoming"), "", (d) => d.next_action_at && daysUntil(d.next_action_at) > 0],
+    [t("No date"), "", (d) => !d.next_action_at],
+  ];
+  const row = (deal) => {
+    const stage = crm.asamalar.find((s) => s.pipeline_id === deal.pipeline_id && s.key === deal.stage);
+    const pipeline = crm.hatlar.find((p) => p.id === deal.pipeline_id);
+    return `<div class="crm-satir${view.selected === deal.id ? " secili" : ""}" role="button" tabindex="0" data-is="crm-sec" data-id="${esc(deal.id)}">
+      ${pinButton(deal)}
+      <div class="crm-kim"><b>${esc(dealName(deal))}</b><small>${esc(pipeline?.name || "")}${stage ? ` · <i style="background:${esc(stage.color)}"></i>${esc(stage.label)}` : ""}</small></div>
+      <p class="crm-is">${esc(deal.next_action || t("No next action"))}</p>
+      <div class="crm-iletisim">${esc(deal.contact_name || "")}${deal.contact_phone ? ` <a href="tel:${esc(deal.contact_phone)}">${esc(deal.contact_phone)}</a>` : ""}</div>
+      <time class="${deal.next_action_at ? dueClass(deal.next_action_at) : ""}">${deal.next_action_at ? shortDate(deal.next_action_at) : ""}</time>
+    </div>`;
+  };
+  const body = groups.map(([title, cls, match]) => {
+    const rows = pinned.filter(match).sort((x, y) => (x.next_action_at || "").localeCompare(y.next_action_at || ""));
+    return rows.length ? `<section class="crm-grup"><h3 class="${cls}">${esc(title)} <small>${rows.length}</small></h3>${rows.map(row).join("")}</section>` : "";
+  }).join("");
+  return body || `<div class="crm-bos"><b>${esc(t("Nobody on the agenda."))}</b><p>${esc(t("Pin a record on the board and it shows up here."))}</p></div>`;
 }
 
 function renderBoard() {
   if (!crm) { loadCrm().then(render); return `<p class="bos">${esc(t("Loading…"))}</p>`; }
   const { businesses, pipelines, pipeline } = currentSelection();
+  const selected = crm.kayitlar.find((d) => d.id === view.selected);
+  const agendaCount = crm.kayitlar.filter((d) => d.gundem).length;
+  const businessTabs = `<div class="cipler"><button type="button" class="crm-gundem-sekme${view.agenda ? " secili" : ""}" data-is="crm-gorunum">${esc(t("Agenda"))} <small>${agendaCount}</small></button><span class="crm-ayrac"></span>${businesses.map((b) => `<button type="button" class="${!view.agenda && b.id === view.business ? "secili" : ""}" data-is="crm-isletme" data-id="${esc(b.id)}">${esc(b.name)}</button>`).join("")}</div>`;
+  if (view.agenda) return `<div class="crm-ust">${businessTabs}</div><div class="crm-gundem">${renderAgenda()}</div>${selected ? dealPanel(selected) : ""}`;
   if (!pipeline) return `<p class="bos">${esc(t("No pipeline."))}</p>`;
   const stages = crm.asamalar.filter((s) => s.pipeline_id === pipeline.id).sort((a, b) => a.position - b.position);
   const deals = crm.kayitlar.filter((d) => d.pipeline_id === pipeline.id);
@@ -80,18 +113,19 @@ function renderBoard() {
   const columns = stages.map((stage, i) => {
     const rows = deals.filter((d) => d.stage === stage.key)
       .sort((x, y) => (x.next_action_at || "9999").localeCompare(y.next_action_at || "9999"));
-    return `<section class="crm-sutun" data-asama="${esc(stage.key)}">
-      <header><i style="background:${esc(stage.color)}"></i><span>${esc(stage.label)}</span><small>${rows.length}</small>
+    // Lost records are history: the column stays a drop target but only opens on request.
+    const folded = stage.kind === "lost" && !view.showClosed;
+    return `<section class="crm-sutun${folded ? " katli" : ""}" data-asama="${esc(stage.key)}">
+      <header ${stage.kind === "lost" ? `data-is="crm-katla" title="${esc(folded ? t("Show") : t("Hide"))}"` : ""}><i style="background:${esc(stage.color)}"></i><span>${esc(stage.label)}</span><small>${rows.length}</small>
         ${i === 0 ? `<button type="button" class="crm-arti" data-is="crm-ekle" title="${esc(t("Add record"))}">+</button>` : ""}</header>
       ${i === 0 && view.add ? `<form class="crm-ekle" data-is-form="crm-ekle"><input id="crm-yeni" placeholder="${esc(t("Customer or record name"))}" autocomplete="off"><button>${esc(t("Add"))}</button></form>` : ""}
-      <div class="crm-kartlar">${rows.map(dealCard).join("") || `<p class="bos">${esc(t("Empty"))}</p>`}</div>
+      ${folded ? "" : `<div class="crm-kartlar">${rows.map(dealCard).join("") || `<p class="bos">${esc(t("Empty"))}</p>`}</div>`}
     </section>`;
   }).join("");
-  const selected = crm.kayitlar.find((d) => d.id === view.selected);
   return `<div class="crm-ust">
-      <div class="cipler">${businesses.map((b) => `<button type="button" class="${b.id === view.business ? "secili" : ""}" data-is="crm-isletme" data-id="${esc(b.id)}">${esc(b.name)}</button>`).join("")}</div>
+      ${businessTabs}
       <div class="crm-hatlar">${pipelines.map((p) => `<button type="button" class="${p.id === pipeline.id ? "secili" : ""}" data-is="crm-hat" data-id="${esc(p.id)}">${esc(p.name)} <small>${countOf(p)}</small></button>`).join("")}</div>
-      <span class="soluk crm-ozet">${esc(t("{n} open", { n: open.length }))}${due ? ` · <b class="gecikti">${esc(due === 1 ? t("{n} follow-up due", { n: due }) : t("{n} follow-ups due", { n: due }))}</b>` : ""}${crm.aktarildi ? ` · ${esc(t("Imported from Speys {time}", { time: timeAgo(new Date(crm.aktarildi).getTime() / 1000) }))}` : ""}</span>
+      <span class="soluk crm-ozet">${esc(t("{n} open", { n: open.length }))}${due ? ` · <b class="gecikti">${esc(due === 1 ? t("{n} follow-up due", { n: due }) : t("{n} follow-ups due", { n: due }))}</b>` : ""}</span>
     </div>
     <div class="crm-pano">${columns}</div>
     ${selected ? dealPanel(selected) : ""}`;
@@ -103,31 +137,32 @@ function dealPanel(deal) {
   const stages = crm.asamalar.filter((s) => s.pipeline_id === deal.pipeline_id).sort((a, b) => a.position - b.position);
   const products = crm.ayarlar.find((s) => s.business_id === deal.business_id)?.products || [];
   const meetings = crm.gorusmeler.filter((m) => m.deal_id === deal.id);
-  const row = (icon, label, value) => `<div class="crm-ozellik"><span>${icon} ${esc(label)}</span><div>${value}</div></div>`;
+  const row = (label, value) => `<div class="crm-ozellik"><span>${esc(label)}</span><div>${value}</div></div>`;
   const field = (name, placeholder, type = "text") => `<input data-alan="${name}" type="${type}" value="${esc(deal[name] || "")}" placeholder="${esc(placeholder)}">`;
   const body = view.edit ? `
-      ${row("👤", t("Contact"), `<div class="crm-iki">${field("contact_name", t("Name"))}${field("contact_role", t("Role"))}</div>`)}
-      ${row("📞", t("Phone"), field("contact_phone", t("Phone number"), "tel"))}
-      ${row("📅", t("Next action"), `<div class="crm-iki">${field("next_action", t("What to do"))}${field("next_action_at", "", "date")}</div>`)}
-      ${products.length ? row("📦", t("Products"), products.map((u) => `<label class="crm-urun"><input type="checkbox" data-urun value="${esc(u)}" ${(deal.products || []).includes(u) ? "checked" : ""}> ${esc(u)}</label>`).join("")) : ""}
-      ${deal.stage === "lost" ? row("✕", t("Lost reason"), field("lost_reason", t("Reason"))) : ""}
-      <div class="crm-not"><span>📝 ${esc(t("Note"))}</span><textarea data-alan="notes" rows="5">${esc(deal.notes || "")}</textarea></div>
+      ${row(t("Contact"), `<div class="crm-iki">${field("contact_name", t("Name"))}${field("contact_role", t("Role"))}</div>`)}
+      ${row(t("Phone"), field("contact_phone", t("Phone number"), "tel"))}
+      ${row(t("Next action"), `<div class="crm-iki">${field("next_action", t("What to do"))}${field("next_action_at", "", "date")}</div>`)}
+      ${products.length ? row(t("Products"), products.map((u) => `<label class="crm-urun"><input type="checkbox" data-urun value="${esc(u)}" ${(deal.products || []).includes(u) ? "checked" : ""}> ${esc(u)}</label>`).join("")) : ""}
+      ${deal.stage === "lost" ? row(t("Lost reason"), field("lost_reason", t("Reason"))) : ""}
+      <div class="crm-not"><span>${esc(t("Note"))}</span><textarea data-alan="notes" rows="5">${esc(deal.notes || "")}</textarea></div>
       <div class="crm-dugmeler"><button type="button" class="ana" data-is="crm-kaydet">${esc(t("Save"))}</button><button type="button" data-is="crm-vazgec">${esc(t("Cancel"))}</button><button type="button" class="tehlike" data-is="crm-sil">${esc(t("Delete"))}</button></div>`
     : `
-      ${deal.contact_name || deal.contact_role ? row("👤", t("Contact"), `${esc(deal.contact_name || "")}${deal.contact_role ? ` <small>${esc(deal.contact_role)}</small>` : ""}`) : ""}
-      ${deal.contact_phone ? row("📞", t("Phone"), `<a href="tel:${esc(deal.contact_phone)}">${esc(deal.contact_phone)}</a>`) : ""}
-      ${deal.next_action || deal.next_action_at ? row("📅", t("Next action"), `<span class="crm-vade ${deal.next_action_at ? dueClass(deal.next_action_at) : ""}">${deal.next_action_at ? formatDate(deal.next_action_at, true) : ""}</span> ${esc(deal.next_action || "")}`) : ""}
-      ${(deal.products || []).length ? row("📦", t("Products"), deal.products.map((u) => `<span class="pil">${esc(u)}</span>`).join(" ")) : ""}
-      ${deal.place_name ? row("📍", t("Place"), `${esc(deal.place_name)}${deal.place_district ? ` <small>${esc(deal.place_district)}</small>` : ""}`) : ""}
-      ${deal.lost_reason ? row("✕", t("Lost reason"), esc(deal.lost_reason)) : ""}
-      ${deal.notes ? `<div class="crm-not"><span>📝 ${esc(t("Note"))}</span><p>${esc(deal.notes).replace(/\n/g, "<br>")}</p></div>` : ""}
+      ${deal.contact_name || deal.contact_role ? row(t("Contact"), `${esc(deal.contact_name || "")}${deal.contact_role ? ` <small>${esc(deal.contact_role)}</small>` : ""}`) : ""}
+      ${deal.contact_phone ? row(t("Phone"), `<a href="tel:${esc(deal.contact_phone)}">${esc(deal.contact_phone)}</a>`) : ""}
+      ${deal.next_action || deal.next_action_at ? row(t("Next action"), `<span class="crm-vade ${deal.next_action_at ? dueClass(deal.next_action_at) : ""}">${deal.next_action_at ? formatDate(deal.next_action_at, true) : ""}</span> ${esc(deal.next_action || "")}`) : ""}
+      ${(deal.products || []).length ? row(t("Products"), deal.products.map((u) => `<span class="pil">${esc(u)}</span>`).join(" ")) : ""}
+      ${deal.place_name ? row(t("Place"), `${esc(deal.place_name)}${deal.place_district ? ` <small>${esc(deal.place_district)}</small>` : ""}`) : ""}
+      ${deal.lost_reason ? row(t("Lost reason"), esc(deal.lost_reason)) : ""}
+      ${deal.notes ? `<div class="crm-not"><span>${esc(t("Note"))}</span><p>${esc(deal.notes).replace(/\n/g, "<br>")}</p></div>` : ""}
       <div class="crm-dugmeler"><button type="button" data-is="crm-duzenle">${esc(t("Edit"))}</button></div>`;
   return `<div class="crm-perde" data-is="crm-kapat"></div>
     <aside class="crm-panel">
-      <header><button type="button" data-is="crm-kapat" title="${esc(t("Close"))}">✕</button><span class="soluk">${esc(business?.name || "")} / ${esc(pipeline?.name || "")}</span></header>
+      <header><button type="button" data-is="crm-kapat" title="${esc(t("Close"))}">✕</button><span class="soluk">${esc(business?.name || "")} / ${esc(pipeline?.name || "")}</span>
+        <button type="button" class="crm-panel-igne${deal.gundem ? " on" : ""}" data-is="crm-gundem" data-id="${esc(deal.id)}">${PIN} ${esc(deal.gundem ? t("On agenda") : t("Add to agenda"))}</button></header>
       <div class="crm-govde">
         ${view.edit && !deal.place_name ? `<input class="crm-baslik" data-alan="title" value="${esc(deal.title || "")}">` : `<h3 class="crm-baslik">${esc(dealName(deal))}</h3>`}
-        ${row("▦", t("Stage"), stages.map((s) => `<button type="button" class="crm-asama${s.key === deal.stage ? " on" : ""}" style="--r:${esc(s.color)}" data-is="crm-asama" data-asama="${esc(s.key)}">${esc(s.label)}</button>`).join(""))}
+        ${row(t("Stage"), stages.map((s) => `<button type="button" class="crm-asama${s.key === deal.stage ? " on" : ""}" style="--r:${esc(s.color)}" data-is="crm-asama" data-asama="${esc(s.key)}">${esc(s.label)}</button>`).join(""))}
         ${body}
         <section class="crm-gorusmeler">
           <h4>${esc(t("Meetings"))} <small>${meetings.length}</small><button type="button" data-is="crm-gorusme-ac">${esc(t("+ Add"))}</button></h4>
@@ -146,11 +181,18 @@ function dealPanel(deal) {
 }
 
 document.addEventListener("click", async (e) => {
+  if (e.target.closest("a")) return; // a phone link on a row calls, it does not open the record
   const target = e.target.closest("[data-is^='crm-']");
   if (!target) return;
   const deal = crm?.kayitlar.find((d) => d.id === view.selected);
   switch (target.dataset.is) {
-    case "crm-isletme": view.business = target.dataset.id; view.pipeline = ""; localStorage.setItem("panel.crmIsletme", view.business); view.selected = null; return render();
+    case "crm-gorunum": setAgenda(true); view.selected = null; return render();
+    case "crm-katla": view.showClosed = !view.showClosed; return render();
+    case "crm-gundem": {
+      const pinned = crm.kayitlar.find((d) => d.id === target.dataset.id);
+      return writeCrm({ op: "guncelle", id: pinned.id, alanlar: { gundem: !pinned.gundem } });
+    }
+    case "crm-isletme": setAgenda(false); view.business = target.dataset.id; view.pipeline = ""; localStorage.setItem("panel.crmIsletme", view.business); view.selected = null; return render();
     case "crm-hat": view.pipeline = target.dataset.id; localStorage.setItem("panel.crmHat", view.pipeline); view.selected = null; return render();
     case "crm-sec": view.selected = target.dataset.id; view.edit = false; view.meeting = false; editing = false; return render();
     case "crm-kapat": view.selected = null; view.edit = false; view.meeting = false; editing = false; return render();
@@ -192,6 +234,8 @@ document.addEventListener("submit", async (e) => {
   }
 });
 document.addEventListener("keydown", (e) => {
+  // Cards and agenda rows are divs (they hold a pin button), so Enter opens them here.
+  if (e.key === "Enter" && e.target.matches?.("[role=button][data-is='crm-sec']")) return e.target.click();
   if (e.key !== "Escape" || e.target.closest?.("input, textarea, select")) return;
   if (view.selected) { view.selected = null; view.edit = false; view.meeting = false; editing = false; render(); }
 });
@@ -233,7 +277,7 @@ window.addEventListener("focus", () => {
   const picked = localStorage.getItem("panel.crmSecili");
   if (picked) {
     localStorage.removeItem("panel.crmSecili");
-    Object.assign(view, { business: localStorage.getItem("panel.crmIsletme") || view.business, pipeline: localStorage.getItem("panel.crmHat") || view.pipeline, selected: picked, edit: false, meeting: false, add: false });
+    Object.assign(view, { business: localStorage.getItem("panel.crmIsletme") || view.business, pipeline: localStorage.getItem("panel.crmHat") || view.pipeline, selected: picked, edit: false, meeting: false, add: false, agenda: false });
   }
   refresh();
 });

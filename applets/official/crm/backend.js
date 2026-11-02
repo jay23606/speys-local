@@ -5,7 +5,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSyn
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
-const FIELDS = ["title", "contact_name", "contact_role", "contact_phone", "next_action", "next_action_at", "products", "notes", "lost_reason"];
+const FIELDS = ["title", "contact_name", "contact_role", "contact_phone", "next_action", "next_action_at", "products", "notes", "gundem", "lost_reason"];
 const MEETINGS = ["visit", "call", "meeting", "email", "note"];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -96,6 +96,7 @@ export default function create({ dataDir, settings, t }) {
         if (!FIELDS.includes(field)) throw new Error(t("field: {field}", { field }));
         if (field === "next_action_at" && value && !DATE_RE.test(value)) throw new Error(t("date"));
         if (field === "products") value = (value || []).map(String);
+        else if (field === "gundem") value = Boolean(value);
         else if (typeof value === "string") value = value.trim() || null;
         deal[field] = value;
       }

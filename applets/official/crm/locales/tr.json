@@ -62,5 +62,18 @@
   "What was discussed": "Ne konuşuldu",
   "No meetings yet.": "Henüz görüşme yok.",
   "Delete \"{name}\" and its meetings?": "\"{name}\" kaydı ve görüşmeleri silinsin mi?",
-  "Delete this meeting?": "Görüşme silinsin mi?"
+  "Delete this meeting?": "Görüşme silinsin mi?",
+  "Agenda": "Gündem",
+  "Add to agenda": "Gündeme ekle",
+  "On agenda": "Gündemde",
+  "Remove from agenda": "Gündemden çıkar",
+  "Overdue": "Gecikti",
+  "Today": "Bugün",
+  "Upcoming": "Yaklaşan",
+  "No date": "Tarihsiz",
+  "No next action": "Sonraki iş yok",
+  "Nobody on the agenda.": "Gündemde kimse yok.",
+  "Pin a record on the board and it shows up here.": "Panoda bir kaydı iğnele, burada görünsün.",
+  "Show": "Göster",
+  "Hide": "Gizle"
 }

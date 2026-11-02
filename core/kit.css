@@ -418,18 +418,35 @@ textarea.duzenle{display:block;width:100%;resize:none;border:0;outline:none;bord
 .crm-hatlar{display:flex;gap:4px;flex-wrap:wrap}.crm-hatlar button{border-radius:8px}.crm-hatlar button.secili{color:var(--metin);border-color:var(--vurgu);box-shadow:inset 0 -2px 0 var(--vurgu)}
 .crm-ozet{font-size:12px;margin-left:auto}.gecikti{color:var(--kirmizi)}
 .crm-pano{display:flex;gap:10px;overflow-x:auto;padding-bottom:12px;min-height:calc(100vh - 190px);align-items:stretch}
-.crm-sutun{flex:0 0 250px;background:color-mix(in srgb,var(--yuzey) 55%,transparent);border:1px solid var(--cizgi);border-radius:14px;display:flex;flex-direction:column}
+.crm-sutun{flex:0 0 268px;background:color-mix(in srgb,var(--yuzey) 45%,transparent);border-radius:12px;display:flex;flex-direction:column}
+.crm-sutun.katli{flex-basis:150px;align-self:flex-start;opacity:.75}.crm-sutun.katli>header,.crm-sutun>header[data-is]{cursor:pointer}
 .crm-sutun.uzerinde{border-color:var(--mavi);background:color-mix(in srgb,var(--mavi) 6%,transparent)}
-.crm-sutun>header{display:flex;align-items:center;gap:6px;padding:10px 12px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
-.crm-sutun>header i{width:8px;height:8px;border-radius:50%;flex-shrink:0}.crm-sutun>header small{font-weight:700}
+.crm-sutun>header{display:flex;align-items:center;gap:6px;padding:10px 12px;font-size:12px;font-weight:700}
+.crm-sutun>header i{width:8px;height:8px;border-radius:50%;flex-shrink:0}.crm-sutun>header small{font-weight:500;color:var(--soluk)}
 .crm-arti{margin-left:auto;border:0;background:var(--yuzey2);border-radius:6px;width:22px;height:22px;line-height:1;font-weight:800;color:var(--soluk)}
-.crm-kartlar{display:grid;gap:8px;padding:0 8px 8px;align-content:start}.crm-kartlar .bos{font-size:12px;padding:6px 4px;margin:0}
-.crm-kart{display:block;width:100%;text-align:left;border:1px solid var(--cizgi);background:var(--yuzey);border-radius:11px;padding:9px 11px;cursor:grab}
+.crm-kartlar{display:grid;gap:6px;padding:0 6px 6px;align-content:start}.crm-kartlar .bos{font-size:12px;padding:6px 4px;margin:0}
+.crm-kart{position:relative;display:block;width:100%;min-width:0;text-align:left;border:1px solid transparent;background:var(--yuzey);border-radius:9px;padding:9px 30px 9px 11px;cursor:grab}
+.crm-kart.gundemde{box-shadow:inset 3px 0 0 var(--vurgu)}
 .crm-kart:hover{border-color:color-mix(in srgb,var(--metin) 30%,var(--cizgi))}.crm-kart.secili{border-color:var(--vurgu)}
-.crm-kart b{display:block;font-size:13px;line-height:1.3}
+.crm-kart b{display:block;font-size:13px;font-weight:600;line-height:1.3}
 .crm-meta{display:block;font-size:11px;color:var(--soluk);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.crm-vade{display:block;font-size:11px;font-weight:700;color:var(--soluk);margin-top:3px}.crm-vade.gecikti{color:var(--kirmizi)}.crm-vade.bugun{color:var(--turuncu)}
-.crm-panel .crm-vade{display:inline}
+.crm-vade{display:block;font-size:11px;font-weight:500;color:var(--soluk);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.crm-vade em{font-style:normal;font-weight:700}.crm-vade.gecikti{color:var(--kirmizi)}.crm-vade.bugun{color:var(--turuncu)}
+.crm-panel .crm-vade{display:inline;white-space:normal;font-weight:700}
+.crm-igne{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:24px;height:24px;border:0;border-radius:6px;background:none;color:var(--soluk);opacity:0;cursor:pointer}
+.crm-igne:hover{background:var(--yuzey2);color:var(--metin)}.crm-kart:hover .crm-igne,.crm-kart:focus-within .crm-igne,.crm-igne.on{opacity:1}.crm-igne.on{color:var(--vurgu)}
+.crm-ust .cipler{flex-wrap:wrap}.crm-ust .cipler button{white-space:nowrap}.crm-ayrac{width:1px;background:var(--cizgi);margin:3px 4px}.crm-gundem-sekme small{opacity:.65;font-weight:500}
+.crm-gundem{max-width:1040px}.crm-grup{margin-bottom:22px}
+.crm-grup h3{margin:0 0 6px;padding:0 4px;font-size:12px;font-weight:700;color:var(--soluk)}.crm-grup h3 small{font-weight:500}.crm-grup h3.gecikti{color:var(--kirmizi)}.crm-grup h3.bugun{color:var(--turuncu)}
+.crm-satir{position:relative;display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,2fr) minmax(110px,.8fr) 64px;gap:14px;align-items:center;padding:11px 14px 11px 40px;background:var(--yuzey);border-radius:10px;margin-bottom:4px;cursor:pointer;font-size:13px}
+.crm-satir:hover{background:color-mix(in srgb,var(--yuzey) 80%,var(--metin) 5%)}.crm-satir.secili{outline:1px solid var(--vurgu)}
+.crm-satir .crm-igne{top:50%;left:10px;right:auto;transform:translateY(-50%);opacity:1}
+.crm-kim{min-width:0}.crm-kim b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crm-kim small{display:block;margin-top:2px;font-size:11px;color:var(--soluk);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.crm-kim small i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:1px}
+.crm-is{margin:0;line-height:1.4}.crm-iletisim{font-size:12px;color:var(--soluk);min-width:0}.crm-iletisim a{display:block;color:var(--metin);text-decoration:none;white-space:nowrap}.crm-iletisim a:hover{text-decoration:underline}
+.crm-satir time{font-size:12px;font-weight:600;text-align:right;color:var(--soluk);white-space:nowrap}.crm-satir time.gecikti{color:var(--kirmizi)}.crm-satir time.bugun{color:var(--turuncu)}
+.crm-bos{padding:60px 20px;text-align:center}.crm-bos p{margin:6px 0 0;color:var(--soluk);font-size:13px}
+.crm-panel-igne{display:inline-flex!important;align-items:center;gap:6px;width:auto!important;margin-left:auto;padding:0 10px;font-size:12px!important;font-weight:600;border:1px solid var(--cizgi)!important}.crm-panel-igne.on{color:var(--vurgu)!important;border-color:var(--vurgu)!important}
+@media (max-width:760px){.crm-satir{grid-template-columns:1fr auto;gap:4px 10px}.crm-is,.crm-iletisim{grid-column:1/-1}.crm-kim{grid-column:1}.crm-satir time{grid-column:2;grid-row:1}}
 .crm-ekle{display:flex;gap:6px;padding:0 8px 8px}.crm-ekle input{flex:1;min-width:0;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--metin);border-radius:8px;padding:6px 8px;font:inherit;font-size:13px}
 .crm-ekle button{border:0;background:var(--vurgu);color:#fff;border-radius:8px;padding:0 10px;font-weight:700}
 .crm-perde{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:20}
