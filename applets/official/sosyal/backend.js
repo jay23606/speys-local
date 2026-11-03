@@ -155,6 +155,7 @@ export default function create({ dataDir, settings, t }) {
       const s = readShared();
       if (s) {
         addFiles(s.videolar, sharedRoot(), SHARED);
+        for (const a of s.hesaplar) if (a.avatar) a.avatar = SHARED + a.avatar;
         d.hesaplar.push(...s.hesaplar);
         d.videolar.push(...s.videolar);
       } else {
@@ -175,10 +176,15 @@ export default function create({ dataDir, settings, t }) {
     return { file, type };
   }
 
+  /** A cover designed for this video (kapak_gorsel); it comes before any frame of the video. */
+  const madeCover = (v, base) => (v.kapak_gorsel ? mediaFile((base === root() ? "" : SHARED) + v.kapak_gorsel) : null);
+
   async function cover(id) {
     const base = owner({ id });
     const v = readCalendar(base).videolar.find((x) => x.id === id);
     if (!v) return null;
+    const made = madeCover(v, base);
+    if (made) return { body: readFileSync(made.file), type: made.type };
     const video = latestVideo(v.proje, base);
     if (video) {
       mkdirSync(covers, { recursive: true });
@@ -197,6 +203,21 @@ export default function create({ dataDir, settings, t }) {
       if (m) return { body: readFileSync(m.file), type: m.type };
     }
     return null;
+  }
+
+  /** The cover at the video's own size, as a PNG for the clipboard. The list's small cover stays cached; this is only made on request. */
+  async function fullCover(id) {
+    const base = owner({ id });
+    const v = readCalendar(base).videolar.find((x) => x.id === id);
+    const made = v && madeCover(v, base);
+    if (made?.type === "image/png") return readFileSync(made.file);
+    const video = v && latestVideo(v.proje, base);
+    if (!video) return null;
+    return new Promise((done) => {
+      execFile(FFMPEG, ["-loglevel", "error", "-ss", String(v.kapak_sn ?? 1), "-i", video, "-frames:v", "1", "-c:v", "png", "-f", "image2pipe", "-"],
+        { encoding: "buffer", maxBuffer: 64 * 1024 * 1024, timeout: 30_000 },
+        (error, out) => done(error || !out.length ? null : out));
+    });
   }
 
   /** Copies the latest render to the clipboard as a file, or shows it in Finder. */
@@ -239,7 +260,8 @@ export default function create({ dataDir, settings, t }) {
       if (!text(q.baslik)) throw new Error(t("title is empty"));
       if (!d.hesaplar.some((x) => x.id === q.hesap)) throw new Error(t("no such account"));
       if (q.tarih && !/^\d{4}-\d{2}-\d{2}$/.test(q.tarih)) throw new Error(t("invalid date"));
-      d.videolar.push({ id: randomUUID(), hesap: q.hesap, baslik: text(q.baslik), tarih: q.tarih || null, adimlar: {}, aciklama: "" });
+      if (q.saat && !TIME_RE.test(q.saat)) throw new Error(t("time must be HH:MM"));
+      d.videolar.push({ id: randomUUID(), hesap: q.hesap, baslik: text(q.baslik), tarih: q.tarih || null, saat: q.saat || "", adimlar: {}, aciklama: "" });
     } else if (op === "tweet_ekle") {
       if (!text(q.metin)) throw new Error(t("the tweet is empty"));
       if (!d.hesaplar.some((x) => x.id === q.hesap)) throw new Error(t("no such account"));
@@ -270,7 +292,9 @@ export default function create({ dataDir, settings, t }) {
         Object.assign(v, { metin: text(q.metin), baslik: tweetTitle(q.metin), tarih: q.tarih || null, saat: q.saat || "", not: text(q.not) });
       } else if (op === "video_duzenle") {
         if (!text(q.baslik)) throw new Error(t("title is empty"));
+        if (q.saat && !TIME_RE.test(q.saat)) throw new Error(t("time must be HH:MM"));
         v.baslik = text(q.baslik);
+        v.saat = q.saat || "";
         for (const field of ["aciklama", "baglanti", "not"]) v[field] = text(q[field]);
       } else if (op === "adim") {
         if (!STEPS.includes(q.adim)) throw new Error(t("no such step"));
@@ -344,6 +368,10 @@ export default function create({ dataDir, settings, t }) {
       if (path.startsWith("/sosyal/kapak/")) {
         const c = await cover(decodeURIComponent(path.slice(14)));
         return c ? send(res, 200, c.body, c.type, "no-cache") : send(res, 404, { error: t("not found") });
+      }
+      if (path.startsWith("/sosyal/kapak-tam/")) {
+        const png = await fullCover(decodeURIComponent(path.slice(18)));
+        return png ? send(res, 200, png, "image/png") : send(res, 404, { error: t("not found") });
       }
       if (path.startsWith("/sosyal/dosya/")) {
         const m = mediaFile(decodeURIComponent(path.slice(14)));

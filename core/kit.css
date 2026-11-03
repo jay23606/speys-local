@@ -352,7 +352,7 @@ textarea.duzenle{display:block;width:100%;resize:none;border:0;outline:none;bord
 .hafta-bas{display:flex;align-items:center;gap:10px;margin:22px 0 12px}
 .hafta-bas h2{margin:0;font-size:16px}
 .hafta-bas .yuvarlak{height:28px;width:28px}
-.hafta{display:grid;grid-template-columns:repeat(7,minmax(110px,136px));gap:14px 12px;overflow-x:auto;padding-bottom:6px;align-items:start}
+.hafta{display:grid;grid-template-columns:repeat(7,110px);gap:14px 12px;overflow-x:auto;padding-bottom:6px;align-items:start}
 .hafta+.hafta{margin-top:28px;padding-top:20px;border-top:1px solid var(--cizgi)}
 .hafta>h4{margin:0;font-size:12px;font-weight:600;color:var(--soluk)}.hafta>h4.bugun{color:var(--vurgu)}
 .gun h4{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--soluk)}
@@ -370,7 +370,7 @@ textarea.duzenle{display:block;width:100%;resize:none;border:0;outline:none;bord
 .bos-slot{aspect-ratio:9/16;border-radius:16px;border:1px dashed var(--cizgi)}
 .bos-slot.plan{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px;text-align:center;font-size:12px;line-height:1.4;color:var(--soluk);border-color:color-mix(in srgb,var(--soluk) 55%,transparent)}
 .tarihsiz{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}
-.tarihsiz .gun{width:136px;flex-shrink:0}
+.tarihsiz .gun{width:110px;flex-shrink:0}
 .sos-alt{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}
 @media (max-width:900px){.sos-alt{grid-template-columns:1fr}}
 .kuyruk li{display:flex;align-items:center;gap:10px;padding:6px 0;list-style:none}

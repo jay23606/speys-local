@@ -44,14 +44,47 @@ test("sharing on X marks a tweet shared, and bad input is refused", async () => 
   }
 });
 
+test("a video keeps its planned time, and a bad time is refused", async () => {
+  const hesap = (await read()).hesaplar[0].id;
+  assert.equal((await write({ op: "video_ekle", hesap, baslik: "Clip", tarih: "2030-01-02", saat: "18:00" })).status, 200);
+  const video = onDisk().videolar.at(-1);
+  assert.equal(video.saat, "18:00");
+  assert.equal((await write({ op: "video_duzenle", id: video.id, baslik: "Clip", saat: "21:15" })).status, 200);
+  assert.equal(onDisk().videolar.at(-1).saat, "21:15");
+  assert.equal((await write({ op: "video_duzenle", id: video.id, baslik: "Clip", saat: "25:00" })).status, 400);
+  assert.equal((await write({ op: "video_ekle", hesap, baslik: "Clip", saat: "soon" })).status, 400);
+  assert.equal((await write({ op: "video_sil", id: video.id })).status, 200);
+});
+
+test("a full-size cover is not found without a video", async () => {
+  assert.equal((await fetch(`${base}/sosyal/kapak-tam/nobody`)).status, 404);
+});
+
+test("a cover made for a video is served in both sizes, and can't point outside the calendar's folder", async () => {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAEAQH/7yMK/gAAAABJRU5ErkJggg==", "base64");
+  writeFileSync(join(dataDir, "made.png"), png);
+  const calendar = onDisk();
+  calendar.videolar.push({ id: "made", hesap: calendar.hesaplar[0].id, baslik: "Made", tarih: null, adimlar: {}, kapak_gorsel: "made.png" }, { id: "escaping", hesap: calendar.hesaplar[0].id, baslik: "Out", tarih: null, adimlar: {}, kapak_gorsel: "../made.png" });
+  writeFileSync(join(dataDir, "takvim.json"), JSON.stringify(calendar));
+  for (const route of ["kapak", "kapak-tam"]) {
+    const r = await fetch(`${base}/sosyal/${route}/made`);
+    assert.equal(r.status, 200);
+    assert.deepEqual(Buffer.from(await r.arrayBuffer()), png);
+    assert.equal((await fetch(`${base}/sosyal/${route}/escaping`)).status, 404);
+  }
+  writeFileSync(join(dataDir, "takvim.json"), JSON.stringify({ ...calendar, videolar: calendar.videolar.slice(0, -2) }));
+});
+
 test("a shared calendar shows next to your own, and changes go back to the file they came from", async () => {
   const own = mkdtempSync(join(tmpdir(), "speys-social-own-"));
   const shared = mkdtempSync(join(tmpdir(), "speys-social-shared-"));
   const sharedFile = join(shared, "takvim.json");
   writeFileSync(join(own, "takvim.json"), JSON.stringify({ hesaplar: [{ id: "me", ad: "Me" }], videolar: [{ id: "mine", hesap: "me", baslik: "Mine" }] }));
-  writeFileSync(sharedFile, JSON.stringify({ hesaplar: [{ id: "games", ad: "Games" }], videolar: [{ id: "theirs", hesap: "games", baslik: "Theirs", proje: "first" }] }));
+  writeFileSync(sharedFile, JSON.stringify({ hesaplar: [{ id: "games", ad: "Games", avatar: "logo/games.png" }], videolar: [{ id: "theirs", hesap: "games", baslik: "Theirs", proje: "first" }] }));
   mkdirSync(join(shared, "first", "renders"), { recursive: true });
   writeFileSync(join(shared, "first", "renders", "cut.mp4"), "video");
+  mkdirSync(join(shared, "logo"));
+  writeFileSync(join(shared, "logo", "games.png"), "logo");
 
   const app = createServer(create({ dataDir: own, settings: () => ({ shared }), t: (s) => s }));
   await new Promise((done) => app.listen(0, "127.0.0.1", done));
@@ -61,6 +94,8 @@ test("a shared calendar shows next to your own, and changes go back to the file 
   try {
     const all = await get();
     assert.deepEqual(all.hesaplar.map((a) => a.id), ["me", "games"]);
+    const games = all.hesaplar.find((a) => a.id === "games");
+    assert.equal(await fetch(`${url}/sosyal/dosya/${encodeURIComponent(games.avatar)}`).then((r) => r.text()), "logo");
     const theirs = all.videolar.find((v) => v.id === "theirs");
     assert.equal(theirs.video, "@shared/first/renders/cut.mp4");
     assert.equal(await fetch(`${url}/sosyal/dosya/${encodeURIComponent(theirs.video)}`).then((r) => r.text()), "video");
