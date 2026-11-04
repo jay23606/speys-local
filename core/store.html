@@ -6,18 +6,66 @@
 <title>Store</title>
 <link rel="stylesheet" href="/kit.css">
 <style>
-.st{max-width:860px;margin:0 auto}
-.st-uyari{margin:0 0 16px;font-size:13px;color:var(--soluk)}
-.st-satir{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid var(--cizgi)}
-.st-satir:first-of-type{border-top:0}
-.st-bilgi{flex:1;min-width:0}
-.st-bilgi small{display:block;font-size:12px;color:var(--soluk);margin-top:2px}
-.st-bilgi p{margin:3px 0 0;font-size:13px;color:var(--soluk)}
-.st-dugmeler{display:flex;gap:6px;flex:none}
-.st-dugmeler button{border:1px solid var(--cizgi);background:var(--yuzey);color:var(--metin);border-radius:8px;padding:5px 12px;font-size:13px}
-.st-dugmeler button.ana{background:var(--metin);color:var(--bg);border-color:var(--metin);font-weight:600}
-.st-dugmeler button:disabled{opacity:.6;cursor:default}
-.st-hata{color:var(--kirmizi);font-size:13px;margin:0 0 12px}
+.mg{max-width:1040px;margin:0 auto}
+.mg-bas{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:8px 0 18px}
+.mg-bas h1{font-size:28px;line-height:1.15;margin:0;letter-spacing:-.01em}
+.mg-bas p{margin:6px 0 0;color:var(--soluk);max-width:540px}
+.mg-ara{flex:0 1 280px;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--metin);border-radius:10px;padding:8px 12px;font:inherit;outline:0}
+.mg-ara:focus{border-color:var(--vurgu)}
+.mg-filtre{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.mg-cip{border:1px solid var(--cizgi);background:var(--yuzey);border-radius:99px;padding:4px 12px;font-size:13px;color:var(--soluk)}
+.mg-cip.secili{background:var(--metin);color:var(--bg);border-color:var(--metin)}
+.mg-cip small{margin-left:5px;color:inherit;opacity:.7}
+.mg-ikon{--boy:44px;width:var(--boy);height:var(--boy);border-radius:calc(var(--boy) * .27);background:var(--yuzey2);position:relative;flex:none;display:flex;align-items:center;justify-content:center;color:var(--renk);font-weight:700;font-size:calc(var(--boy) * .42)}
+.mg-ikon svg{width:50%;height:50%}
+.mg-kim{display:flex;gap:12px;align-items:center;min-width:0}
+.mg-kim b{display:block;font-size:15px;line-height:1.3}
+.mg-kim small{display:block;font-size:12px}
+.mg-one{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);background:var(--yuzey);border:1px solid var(--cizgi);border-radius:16px;overflow:hidden;margin-bottom:16px;cursor:pointer}
+.mg-one .metin{padding:26px 24px;display:flex;flex-direction:column;gap:12px;justify-content:center}
+.mg-one .metin p{margin:0;font-size:15px;color:var(--soluk)}
+.mg-one .mg-ikon{--boy:56px}
+.mg-one .mg-kim b{font-size:20px}
+.mg-one .gorsel{background:var(--yuzey2);padding:24px 0 0 24px;display:flex;align-items:flex-end;min-height:220px}
+.mg-one .gorsel img{width:100%;display:block;border-radius:10px 0 0 0;border:1px solid var(--cizgi);border-width:1px 0 0 1px}
+@media (max-width:760px){.mg-one{grid-template-columns:1fr}.mg-one .gorsel{min-height:0}}
+.mg-izgara{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.mg-kart{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;transition:background-color .2s}
+.mg-kart:hover,.mg-one:hover{background:color-mix(in srgb,var(--metin) 4%,var(--yuzey))}
+.mg-one{transition:background-color .2s}
+.mg-onizleme img,.mg-one .gorsel img{transition:transform .4s ease;transform-origin:left top}
+.mg-kart:hover .mg-onizleme img,.mg-one:hover .gorsel img{transform:scale(1.04)}
+.mg-kart p{margin:0;font-size:13px;color:var(--soluk);flex:1}
+.mg-onizleme{margin:-16px -16px 2px;height:150px;overflow:hidden;background:var(--yuzey2);padding:14px 0 0 14px;border-bottom:1px solid var(--cizgi)}
+.mg-onizleme img{width:100%;height:100%;display:block;object-fit:cover;object-position:left top;border-radius:8px 0 0 0;border:1px solid var(--cizgi);border-width:1px 0 0 1px}
+.mg-alt{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mg-etiket{font-size:11px;padding:1px 8px;border-radius:99px;background:var(--yuzey2);color:var(--soluk)}
+.mg-dugme{margin-left:auto;border:0;border-radius:99px;padding:5px 14px;font-weight:600;font-size:13px;background:var(--yuzey2);color:var(--metin)}
+.mg-dugme.ana{background:var(--vurgu);color:#fff}
+.mg-dugme.ince{background:none;border:1px solid var(--cizgi);color:var(--soluk);font-weight:500}
+.mg-dugme:disabled{opacity:.6;cursor:default}
+.mg-kurulu{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--yesil)}
+.mg-bos{text-align:center;padding:40px 16px;color:var(--soluk)}
+.mg-hata{color:var(--kirmizi);font-size:13px;margin:0 0 12px}
+.mg-yaz{margin-top:24px;border:1px dashed var(--cizgi);border-radius:14px;padding:18px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.mg-yaz div{flex:1;min-width:240px}
+.mg-yaz b{display:block;font-size:15px}
+.mg-yaz p{margin:4px 0 0;font-size:13px;color:var(--soluk)}
+.mg-yaz a{font-size:13px;font-weight:600;white-space:nowrap}
+.mg-guven{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--soluk);margin:14px 0 0}
+.mg-guven svg{flex:none;margin-top:1px}
+.mg-detay{padding:6px 8px}
+.mg-detay .ust{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mg-detay .mg-ikon{--boy:60px}
+.mg-detay .mg-kim b{font-size:19px}
+.mg-detay .dugmeler{margin-left:auto;display:flex;gap:6px}
+.mg-detay .dugmeler .mg-dugme{margin-left:0;padding:7px 18px}
+.mg-detay>p{font-size:14px;margin:14px 0}
+.mg-goruntuler{display:flex;gap:10px;overflow-x:auto;margin:16px 0 4px;padding-bottom:6px;scroll-snap-type:x mandatory}
+.mg-goruntuler img{flex:none;width:min(100%,960px);height:auto;max-height:60vh;object-fit:cover;object-position:left top;border-radius:10px;border:1px solid var(--cizgi);scroll-snap-align:start}
+.mg-bilgi{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 18px;font-size:13px;margin:0;padding:12px 0;border-top:1px solid var(--cizgi)}
+.mg-bilgi dt{color:var(--soluk)}
+.mg-bilgi dd{margin:0}
 </style>
 </head>
 <body>
@@ -25,27 +73,95 @@
 <script src="/kit.js"></script>
 <script>
 "use strict";
-let store = null, busy = "", error = "";
+let store = null, busy = "", error = "", query = "", filter = "all", detail = null;
 
-function row(a) {
-  const installed = a.installed, update = installed && installed.commit !== a.commit;
-  const working = busy === a.id;
-  const buttons = !installed
-    ? `<button type="button" class="ana" data-install="${esc(a.id)}"${busy ? " disabled" : ""}>${esc(working ? t("Installing…") : t("Install"))}</button>`
-    : `${update ? `<button type="button" class="ana" data-install="${esc(a.id)}"${busy ? " disabled" : ""}>${esc(working ? t("Updating…") : t("Update to {version}", { version: a.version }))}</button>` : ""}
-       <button type="button" data-remove="${esc(a.id)}"${busy ? " disabled" : ""}>${esc(t("Remove"))}</button>`;
-  return `<div class="st-satir"><div class="st-bilgi"><b>${esc(a.name)}</b>
-      <small>${esc(t("by {author}", { author: a.author }))} · ${esc(installed ? t("version {version} installed", { version: installed.version }) : t("version {version}", { version: a.version }))} · <a href="${esc(a.repo)}/tree/${esc(a.commit)}" target="_blank" rel="noopener">${esc(t("Source"))}</a></small>
-      <p>${esc(a.description)}</p></div><div class="st-dugmeler">${buttons}</div></div>`;
+const COLORS = ["--vurgu", "--mavi", "--yesil", "--mor", "--kirmizi", "--turuncu"];
+const PLATFORM = { macos: "macOS", windows: "Windows", linux: "Linux" };
+const SOURCE = "https://github.com/speys-app/speys-local/tree/main/applets/store/";
+const SHIELD = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
+const CHECK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+
+const color = (id) => `var(${COLORS[[...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % COLORS.length]})`;
+// The icon is the applet's own SVG file from this repo, drawn with currentColor
+const icon = (a) => `<span class="mg-ikon" style="--renk:${color(a.id)}">${a.icon || esc(a.name.slice(0, 1))}</span>`;
+const who = (a) => `<span class="mg-kim">${icon(a)}<span><b>${esc(a.name)}</b><small>${esc(t("by {author}", { author: a.author }))}</small></span></span>`;
+const platforms = (a) => a.platforms.map((p) => PLATFORM[p]).join(", ");
+const shown = (a) => a.installed || a.customCopy;
+
+function buttons(a, { remove = false } = {}) {
+  const off = busy ? " disabled" : "";
+  if (!shown(a)) return `<button type="button" class="mg-dugme ana" data-install="${esc(a.id)}"${off}>${esc(busy === a.id ? t("Installing…") : t("Install"))}</button>`;
+  return `<button type="button" class="mg-dugme" data-open-applet="${esc(a.id)}">${esc(t("Open"))}</button>`
+    + (remove && a.installed ? `<button type="button" class="mg-dugme ince" data-remove="${esc(a.id)}"${off}>${esc(t("Remove"))}</button>` : "");
+}
+
+const tags = (a) => [a.category, platforms(a)].filter(Boolean).map((x) => `<span class="mg-etiket">${esc(x)}</span>`).join("");
+const installedMark = (a) => (shown(a) ? `<span class="mg-kurulu">${CHECK}${esc(a.installed ? t("Installed") : t("Your copy"))}</span>` : "");
+
+const card = (a) => `<article class="mg-kart" data-detail="${esc(a.id)}" style="--renk:${color(a.id)}">
+  ${a.shots.length ? `<div class="mg-onizleme"><img src="/store-media/${esc(a.id)}/${esc(a.shots[0])}" alt="" loading="lazy"></div>` : ""}
+  ${who(a)}<p>${esc(a.description)}</p>
+  <div class="mg-alt">${tags(a)}${installedMark(a)}${buttons(a)}</div></article>`;
+
+const featured = (a) => `<article class="mg-one" data-detail="${esc(a.id)}" style="--renk:${color(a.id)}">
+  <div class="metin">${who(a)}<p>${esc(a.description)}</p><div class="mg-alt">${tags(a)}${installedMark(a)}${buttons(a)}</div></div>
+  <div class="gorsel"><img src="/store-media/${esc(a.id)}/${esc(a.shots[0])}" alt="${esc(a.name)}"></div></article>`;
+
+function detailHtml(a) {
+  const facts = [[t("Reads"), a.reads], [t("Works on"), platforms(a)], [t("Category"), a.category]].filter(([, v]) => v);
+  return `<div class="mg-detay" style="--renk:${color(a.id)}">
+    <div class="ust">${who(a)}<div class="dugmeler">${buttons(a, { remove: true })}</div></div>
+    ${error ? `<p class="mg-hata">${esc(error)}</p>` : ""}
+    ${a.shots.length ? `<div class="mg-goruntuler">${a.shots.map((s) => `<img src="/store-media/${esc(a.id)}/${esc(s)}" alt="">`).join("")}</div>` : ""}
+    <p>${esc(a.description)}</p>
+    <dl class="mg-bilgi">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}
+      <dt>${esc(t("Source"))}</dt><dd><a href="${SOURCE}${esc(a.id)}" target="_blank" rel="noopener">applets/store/${esc(a.id)}</a></dd></dl>
+    ${a.customCopy ? `<p class="mg-guven">${t("Your own copy in <code>applets/custom/{id}/</code> runs instead of this one.", { id: esc(a.id) })}</p>` : ""}
+    <p class="mg-guven">${SHIELD}<span>${esc(t("Its code was reviewed before it was added. It runs with your permissions on this computer and updates with Speys Local."))}</span></p></div>`;
+}
+
+function matches(a) {
+  if (filter === "installed" && !shown(a)) return false;
+  if (filter !== "all" && filter !== "installed" && a.category !== filter) return false;
+  const q = query.trim().toLocaleLowerCase(LOCALE);
+  return !q || [a.name, a.description, a.author, a.category].some((x) => x?.toLocaleLowerCase(LOCALE).includes(q));
 }
 
 function draw() {
   if (!store) return;
-  $("#icerik").innerHTML = `<div class="st"><section class="kart"><h2>${esc(t("Store"))}</h2>
-    <p class="st-uyari">${esc(t("Applets written by other people. Every version is reviewed before it is listed, and nothing updates by itself. An applet still runs with your permissions on this computer, so install the ones you trust."))}</p>
-    ${error ? `<p class="st-hata">${esc(error)}</p>` : ""}
-    ${store.applets.map(row).join("") || `<p class="bos">${esc(t("No applets yet."))}</p>`}
-    <p class="ay-not soluk" style="font-size:12px;margin:12px 0 0">${t("Wrote one? Send it with a pull request to <code>store.json</code>; see CONTRIBUTING.md.")}</p></section></div>`;
+  const all = store.applets;
+  const categories = [...new Set(all.map((a) => a.category).filter(Boolean))];
+  const installedCount = all.filter(shown).length;
+  const chip = (id, label, n) => `<button type="button" class="mg-cip${filter === id ? " secili" : ""}" data-filter="${esc(id)}">${esc(label)}${n ? `<small>${n}</small>` : ""}</button>`;
+  const list = all.filter(matches);
+  const top = filter === "all" && !query.trim() ? list.find((a) => a.shots.length && !shown(a)) ?? list.find((a) => a.shots.length) : null;
+  const rest = list.filter((a) => a !== top);
+  const search = $("#ara");
+  const caret = search && document.activeElement === search ? search.selectionStart : null;
+
+  $("#icerik").innerHTML = `<div class="mg">
+    <header class="mg-bas"><div><h1>${esc(t("Store"))}</h1>
+      <p>${esc(t("Small tools that run on your own computer. Every version is reviewed before it is listed, and installs with one click."))}</p></div>
+      ${all.length ? `<input id="ara" class="mg-ara" type="search" placeholder="${esc(t("Search the store"))}" value="${esc(query)}">` : ""}</header>
+    ${all.length > 1 ? `<nav class="mg-filtre">${chip("all", t("All"))}${categories.map((c) => chip(c, c)).join("")}${installedCount ? chip("installed", t("Installed"), installedCount) : ""}</nav>` : ""}
+    ${error && !detail ? `<p class="mg-hata">${esc(error)}</p>` : ""}
+    ${top ? featured(top) : ""}
+    ${rest.length ? `<div class="mg-izgara">${rest.map(card).join("")}</div>`
+      : !top ? `<p class="mg-bos">${esc(all.length ? t("Nothing matches “{query}”.", { query: query.trim() }) : t("No applets yet."))}</p>` : ""}
+    <section class="mg-yaz"><div><b>${esc(t("Write your own"))}</b>
+      <p>${t("Tell Claude what you're missing: “add an applet under <code>applets/custom/</code> that…”. When it works for you, send it to the Store with a pull request.")}</p></div>
+      <a href="https://github.com/speys-app/speys-local/blob/main/CONTRIBUTING.md#store" target="_blank" rel="noopener">${esc(t("How to send one"))} →</a></section>
+    <p class="mg-guven">${SHIELD}<span>${esc(t("Applets update together with Speys Local, only when you click. Each one runs with your permissions on this computer, so install the ones you trust."))}</span></p></div>`;
+
+  if (caret !== null) {
+    const box = $("#ara");
+    box.focus();
+    box.setSelectionRange(caret, caret);
+  }
+  if (detail) {
+    const a = all.find((x) => x.id === detail.id);
+    if (a) detail.popup.setBody(detailHtml(a));
+  }
 }
 
 async function load() {
@@ -53,41 +169,49 @@ async function load() {
   draw();
 }
 
-async function post(path, body) {
-  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Panel": "1" }, body: JSON.stringify(body) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || String(r.status));
-  return j;
-}
-
 async function act(id, path, done) {
   busy = id; error = ""; draw();
   try {
-    const j = await post(path, { id });
-    if (j.restarting) {
-      // The server restarts to run the new code: the page reloads once it is back
-      for (let i = 0; i < 40; i++) {
-        await new Promise((next) => setTimeout(next, 500));
-        if (await fetch("/api/applets", { cache: "no-store" }).then((x) => x.ok).catch(() => false)) break;
-      }
-      return parent.location.reload();
-    }
-    notify(j.restartNeeded ? t("Updated. Restart the server to run the new code.") : done);
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Panel": "1" }, body: JSON.stringify({ id }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || String(r.status));
+    notify(done);
     await parent.refreshApplets?.();
     await load();
   } catch (e) { error = e.message; }
   busy = ""; draw();
 }
 
+function openDetail(id) {
+  const a = store.applets.find((x) => x.id === id);
+  const popup = openPopup({ title: a.name, body: detailHtml(a), wide: a.shots.length > 0, onClose: () => { detail = null; } });
+  detail = { id, popup };
+}
+
 document.addEventListener("click", (e) => {
   const install = e.target.closest("[data-install]");
   if (install) {
     const a = store.applets.find((x) => x.id === install.dataset.install);
-    if (!a.installed && !confirm(t("{name} will run with your permissions on this computer. Install it?", { name: a.name }))) return;
+    if (!confirm(t("{name} will run with your permissions on this computer. Install it?", { name: a.name }))) return;
     return act(a.id, "/api/store/install", t("Installed."));
   }
   const remove = e.target.closest("[data-remove]");
-  if (remove && confirm(t("Remove this applet? Its data in data/ stays."))) act(remove.dataset.remove, "/api/store/remove", t("Removed."));
+  if (remove) {
+    if (confirm(t("Remove this applet? Its data in data/ stays."))) act(remove.dataset.remove, "/api/store/remove", t("Removed."));
+    return;
+  }
+  const open = e.target.closest("[data-open-applet]");
+  if (open) {
+    detail?.popup.close();
+    return parent.openApplet?.(open.dataset.openApplet);
+  }
+  const chip = e.target.closest("[data-filter]");
+  if (chip) { filter = chip.dataset.filter; return draw(); }
+  const item = e.target.closest("[data-detail]");
+  if (item && !e.target.closest("a, button")) openDetail(item.dataset.detail);
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "ara") { query = e.target.value; draw(); }
 });
 window.addEventListener("focus", () => { if (!isHidden() && !busy) load(); });
 load();

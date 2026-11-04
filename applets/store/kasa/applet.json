@@ -1,0 +1,24 @@
+{
+  "name": "Finances",
+  "description": "Income and expenses on this computer: spending, recurring payments, pending items.",
+  "category": "Business",
+  "reads": "Only its own data",
+  "icon": "icon.svg",
+  "order": 36,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "file",
+      "label": "Ledger file",
+      "hint": "If empty, data/apps/kasa/defter.json",
+      "type": "path"
+    },
+    {
+      "key": "currency",
+      "label": "Currency",
+      "hint": "Only the label: amounts aren't converted. If empty, TL in Turkish and USD in other languages",
+      "type": "text",
+      "placeholder": "USD"
+    }
+  ]
+}

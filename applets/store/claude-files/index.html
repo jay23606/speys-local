@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Files</title>
+<link rel="stylesheet" href="/kit.css">
+<style>
+main{max-width:1000px;margin:0 auto;padding:20px 26px 60px}
+.cf-ust{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.cf-ust .alt-sekmeler{margin:0}
+.cf-yenile{margin-left:auto;font-size:12px;color:var(--soluk);display:flex;align-items:center;gap:8px}
+.cf-yenile button{border:1px solid var(--cizgi);background:var(--yuzey);border-radius:99px;padding:4px 12px;color:var(--soluk);font-size:12px}
+.cf-klasorler{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+.cf-klasor{text-align:left;font:inherit;color:var(--metin);cursor:pointer;background:var(--yuzey);border:1px solid var(--cizgi);border-radius:12px;padding:14px 16px;min-width:0}
+.cf-klasor.secili{border-color:var(--vurgu)}
+.cf-klasor b{display:block;font-size:24px;margin:2px 0}
+.cf-klasor code{font-size:12px;color:var(--soluk)}
+.cf-kart{margin-bottom:16px}
+.cf-satir{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:2px 12px;padding:8px 0;border-top:1px solid var(--cizgi);align-items:baseline}
+.cf-satir:first-of-type{border-top:0}
+.cf-satir b{font-weight:500;overflow-wrap:anywhere}
+.cf-satir small{grid-column:1;overflow-wrap:anywhere}
+.cf-boyut{text-align:right;font-variant-numeric:tabular-nums}
+.cf-cubuk{grid-column:1/-1;height:4px;border-radius:2px;background:color-mix(in srgb,var(--metin) 8%,transparent);overflow:hidden}
+.cf-cubuk i{display:block;height:100%;background:var(--vurgu)}
+.cf-ara{width:100%;font:inherit;color:var(--metin);background:var(--yuzey);border:1px solid var(--cizgi);border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.cf-acilir{display:block;width:100%;border:0;border-top:1px solid var(--cizgi);background:none;color:inherit;font:inherit;text-align:left;padding:9px 0;cursor:pointer}
+.cf-acilir:first-of-type{border-top:0}
+.cf-acilir b{font-weight:500;overflow-wrap:anywhere}
+.cf-acilir small{display:block;overflow-wrap:anywhere}
+.cf-rozet{font-size:11px;padding:1px 7px;border-radius:99px;margin-left:6px;color:var(--soluk);background:color-mix(in srgb,var(--metin) 8%,transparent)}
+.cf-metin{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;margin:4px 0 10px;padding:0 8px}
+.cf-yol{padding:0 8px;overflow-wrap:anywhere}
+.cf-kural{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;padding:3px 0;overflow-wrap:anywhere}
+details summary{cursor:pointer;padding:8px 0}
+@media (max-width:640px){main{padding:14px 16px 40px}}
+</style>
+</head>
+<body>
+<main id="icerik"></main>
+<script src="/kit.js"></script>
+<script>
+"use strict";
+document.title = "Claude Files";
+
+let data = null, error = "", query = "", searchFocused = false;
+const route = () => {
+  const [tab = "disk"] = decodeURIComponent(location.hash.slice(1)).split("/");
+  return ["disk", "memories", "setup"].includes(tab) ? tab : "disk";
+};
+const view = { folder: 0, shown: [] };
+
+function size(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 ** 2) return `${formatDecimal(bytes / 1024, 0)} KB`;
+  if (bytes < 1024 ** 3) return `${formatDecimal(bytes / 1024 ** 2, bytes < 100 * 1024 ** 2 ? 1 : 0)} MB`;
+  return `${formatDecimal(bytes / 1024 ** 3, 1)} GB`;
+}
+const day = (ms) => (ms ? new Date(ms).toLocaleDateString(LOCALE, { day: "numeric", month: "short", year: "numeric" }) : "");
+const sizeRow = (name, note, bytes, max) => `<div class="cf-satir"><b>${esc(name)}</b><span class="cf-boyut">${esc(size(bytes))}</span>
+  ${note ? `<small>${esc(note)}</small>` : ""}<span class="cf-cubuk"><i style="width:${max ? Math.max(0.5, bytes / max * 100) : 0}%"></i></span></div>`;
+const card = (title, body) => `<section class="kart cf-kart"><h2>${esc(title)}</h2>${body}</section>`;
+const empty = (text) => `<p class="bos">${esc(text)}</p>`;
+
+function diskHtml(f) {
+  const items = f.items.filter((i) => i.size > 0).slice(0, 12);
+  const projects = f.projects.map((p) => sizeRow(p.name, [t("{n} sessions", { n: p.sessionCount }), p.cwd, p.modified ? t("last {date}", { date: day(p.modified) }) : ""].filter(Boolean).join(" · "), p.size, f.projects[0].size)).join("");
+  const biggest = f.biggest.map((s) => sizeRow(s.project, `${day(s.modified)} · ${s.id.slice(0, 8)}`, s.size, f.biggest[0].size)).join("");
+  return card(t("What takes the space"), items.map((i) => sizeRow(i.name, t("{n} files", { n: formatNumber(i.files) }), i.size, items[0].size)).join(""))
+    + card(t("Projects"), projects || empty(t("No projects.")))
+    + card(t("Biggest sessions"), biggest || empty(t("No sessions.")));
+}
+
+/** A row that opens its text in a window; the text is looked up by index, so nothing long goes into the page's attributes. */
+function openRow(title, note, badge, text, path) {
+  const at = view.shown.push({ title, text, path }) - 1;
+  return `<button type="button" class="cf-acilir" data-open="${at}"><b>${esc(title)}</b>${badge ? `<span class="cf-rozet">${esc(badge)}</span>` : ""}${note ? `<small>${esc(note)}</small>` : ""}</button>`;
+}
+
+function memoriesHtml(f) {
+  const q = query.trim().toLocaleLowerCase(LOCALE);
+  const match = (m) => !q || [m.name, m.description, m.project, m.body].some((s) => s.toLocaleLowerCase(LOCALE).includes(q));
+  const list = f.memories.filter(match);
+  const byProject = new Map();
+  for (const m of list) byProject.set(m.project, [...(byProject.get(m.project) || []), m]);
+  const groups = [...byProject].sort((a, b) => b[1].length - a[1].length).map(([project, rows]) => card(`${project} · ${rows.length}`,
+    rows.sort((a, b) => b.modified - a.modified).map((m) => openRow(m.name, m.description, m.type, m.body, m.path)).join(""))).join("");
+  return `<input class="cf-ara" id="cf-ara" type="search" value="${esc(query)}" placeholder="${esc(t("Search {n} memories", { n: f.memories.length }))}">
+    ${groups || empty(q ? t("Nothing found.") : t("No memories."))}`;
+}
+
+function setupHtml(f) {
+  const hooks = f.settings.flatMap((s) => s.hooks.map((h) => `<div class="cf-satir"><b>${esc(h.event)}${h.matcher ? ` · ${esc(h.matcher)}` : ""}</b><small class="cf-kural" style="grid-column:1/-1">${esc(h.command)}</small></div>`)).join("");
+  const rules = f.settings.flatMap((s) => [["allow", t("Allowed")], ["ask", t("Asks")], ["deny", t("Denied")]].filter(([k]) => s[k].length).map(([k, label]) =>
+    `<details><summary>${esc(label)} · ${s[k].length} <small>${esc(s.path)}</small></summary>${s[k].map((r) => `<div class="cf-kural">${esc(r)}</div>`).join("")}</details>`)).join("");
+  const plugins = [...new Set([...f.plugins, ...f.settings.flatMap((s) => s.plugins)])];
+  return card(t("Instructions Claude reads"), f.instructions.map((i) => openRow(i.scope === "Global" ? t("Global") : i.scope, `${i.path} · ${size(i.size)}`, "", i.body, i.path)).join("") || empty(t("No CLAUDE.md found.")))
+    + card(t("Skills"), f.skills.map((s) => `<div class="cf-satir"><b>${esc(s.name)}</b><span class="cf-boyut">${esc(size(s.size))}</span><small>${esc(s.description)}</small></div>`).join("") || empty(t("No skills in this folder.")))
+    + card(t("Hooks"), hooks || empty(t("No hooks.")))
+    + card(t("Plugins"), plugins.map((p) => `<div class="cf-kural">${esc(p)}</div>`).join("") || empty(t("No plugins.")))
+    + card(t("MCP servers"), f.mcp.map((m) => `<div class="cf-satir"><b>${esc(m.name)}</b><small>${esc(m.where === "all projects" ? t("all projects") : m.where)}</small></div>`).join("") || empty(t("No MCP servers.")))
+    + card(t("Permissions"), rules || empty(t("No saved permission rules.")));
+}
+
+function draw() {
+  if (error && !data) { $("#icerik").innerHTML = `<p class="fark-kotu">${esc(error)}</p>`; return; }
+  if (!data) { $("#icerik").innerHTML = `<p class="bos">${esc(t("Measuring your Claude folders…"))}</p>`; return; }
+  if (!data.folders.length) { $("#icerik").innerHTML = notConfigured("Claude Files"); return; }
+  const tab = route(), f = data.folders[view.folder] || data.folders[0];
+  view.shown = [];
+  const tabs = [["disk", t("Disk")], ["memories", t("Memories")], ["setup", t("Setup")]].map(([id, label]) =>
+    `<button type="button" class="${id === tab ? "secili" : ""}" data-tab="${id}">${esc(label)}</button>`).join("");
+  const folders = data.folders.map((x, i) => `<button type="button" class="kart cf-klasor${x === f ? " secili" : ""}" data-folder="${i}"><code>${esc(x.path)}</code><b>${esc(size(x.size))}</b>
+    <small>${esc(t("{files} files · {memories} memories", { files: formatNumber(x.files), memories: x.memories.length }))}</small></button>`).join("");
+  const body = tab === "memories" ? memoriesHtml(f) : tab === "setup" ? setupHtml(f) : diskHtml(f);
+  const scroll = scrollY;
+  $("#icerik").innerHTML = `<div class="cf-ust"><div class="alt-sekmeler">${tabs}</div>
+      <div class="cf-yenile"><span>${esc(t("Read-only: nothing here changes a file."))}</span><button type="button" data-refresh>${esc(t("Refresh"))}</button></div></div>
+    <div class="cf-klasorler">${folders}</div>${body}`;
+  scrollTo(0, scroll);
+  if (searchFocused) {
+    const input = $("#cf-ara");
+    input?.focus();
+    input?.setSelectionRange(input.value.length, input.value.length);
+  }
+}
+
+async function load(refresh) {
+  try {
+    data = await getJson(`./api/overview${refresh ? "?refresh=1" : ""}`);
+    error = "";
+  } catch (e) {
+    error = String(e.message || e);
+    if (data) notify(error);
+  }
+  draw();
+}
+
+document.addEventListener("click", (e) => {
+  const tab = e.target.closest("[data-tab]");
+  if (tab) { searchFocused = false; location.hash = tab.dataset.tab; return; }
+  const folder = e.target.closest("[data-folder]");
+  if (folder) { view.folder = +folder.dataset.folder; searchFocused = false; return draw(); }
+  if (e.target.closest("[data-refresh]")) { searchFocused = false; return load(true); }
+  const open = e.target.closest("[data-open]");
+  if (open) {
+    const item = view.shown[+open.dataset.open];
+    const popup = openPopup({ title: item.title });
+    popup.element.style.width = "min(760px,calc(100vw - 32px))";
+    popup.setBody(`<p class="cf-yol"><small>${esc(item.path)}</small></p><div class="cf-metin">${esc(item.text)}</div>`);
+  }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id !== "cf-ara") return;
+  query = e.target.value;
+  searchFocused = true;
+  draw();
+});
+window.addEventListener("hashchange", draw);
+
+draw();
+load();
+</script>
+</body>
+</html>

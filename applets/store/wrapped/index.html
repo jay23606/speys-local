@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Wrapped</title>
+<link rel="stylesheet" href="/kit.css">
+<style>
+main{max-width:1040px;margin:0 auto;padding:20px 26px 60px}
+.w-ust{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.w-ust .alt-sekmeler{margin:0}
+.w-durum{margin-left:auto;font-size:12px;color:var(--soluk)}
+.w-duzen{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.w-hero{background:linear-gradient(135deg,color-mix(in srgb,var(--vurgu) 28%,var(--yuzey)),var(--yuzey) 70%);border:1px solid var(--cizgi);border-radius:14px;padding:22px 24px;margin-bottom:12px}
+.w-hero small{letter-spacing:.06em;text-transform:uppercase}
+.w-hero h1{font-size:34px;line-height:1.1;margin:6px 0}
+.w-hero p{margin:0;color:var(--soluk)}
+.w-sayilar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.w-sayi{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:12px;padding:12px 14px}
+.w-sayi b{display:block;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
+.w-sayi small{display:block;margin-top:2px}
+.w-saatler{display:flex;align-items:flex-end;gap:3px;height:92px}
+.w-saatler i{flex:1;min-height:2px;border-radius:2px 2px 0 0;background:color-mix(in srgb,var(--metin) 18%,transparent)}
+.w-saatler i.tepe{background:var(--vurgu)}
+.w-saat-alt{display:flex;justify-content:space-between;font-size:11px;color:var(--soluk);margin-top:4px}
+.w-liste{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.w-satir{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid var(--cizgi);overflow-wrap:anywhere}
+.w-satir:first-of-type{border-top:0}
+.w-satir span:last-child{color:var(--soluk);flex-shrink:0;font-variant-numeric:tabular-nums}
+.w-kart{position:sticky;top:16px}
+.w-kart canvas{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--cizgi)}
+.w-dugmeler{display:flex;gap:8px;margin-top:10px}
+.w-dugmeler button{flex:1;border:1px solid var(--cizgi);background:var(--yuzey);border-radius:99px;padding:8px 10px;font:inherit;font-size:13px;color:var(--metin)}
+.w-dugmeler button.ana{background:var(--vurgu);border-color:var(--vurgu);color:#fff;font-weight:600}
+.w-secim{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px;color:var(--soluk)}
+.w-not{font-size:12px;color:var(--soluk);margin:10px 0 0}
+.w-bos{max-width:520px;margin:12vh auto}
+@media (max-width:820px){.w-duzen{grid-template-columns:minmax(0,1fr)}.w-kart{position:static}.w-liste{grid-template-columns:minmax(0,1fr)}.w-sayilar{grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:14px 16px 40px}}
+</style>
+</head>
+<body>
+<main id="icerik"></main>
+<script src="/kit.js"></script>
+<script>
+"use strict";
+document.title = "Claude Wrapped";
+
+const CARD = { width: 1080, height: 1350 };
+const TITLES = {
+  night: { name: t("Night Owl"), line: (s) => t("{percent} of your messages came after midnight.", { percent: percent(s.nightPrompts, s.prompts) }) },
+  conductor: { name: t("The Conductor"), line: (s) => t("You ran {n} sessions at the same time.", { n: s.busiestAtOnce }) },
+  backseat: { name: t("Backseat Driver"), line: (s) => t("You stopped Claude {n} times.", { n: formatNumber(s.stops) }) },
+  screenshots: { name: t("Screenshot Collector"), line: (s) => t("You pasted {n} images.", { n: formatNumber(s.images) }) },
+  everyday: { name: t("Never Off"), line: (s) => t("You worked with Claude on {n} days.", { n: s.activeDays }) },
+  steady: { name: t("Steady Hands"), line: (s) => t("{n} messages, one after the other.", { n: formatNumber(s.prompts) }) },
+};
+const state = { period: "30d", showProject: false };
+let answer = null, topTypo = null, error = "", polling = null;
+
+const hours = (seconds) => Math.round(seconds / 3600);
+const compact = (n) => new Intl.NumberFormat(LOCALE, { notation: "compact", maximumFractionDigits: 1 }).format(n);
+const hourText = (h) => `${String(h).padStart(2, "0")}:00`;
+const periodName = (p) => p === "30d" ? t("Last 30 days") : new Date(`${p}-15T12:00`).toLocaleDateString(LOCALE, { month: "long", year: "numeric" });
+
+const statsOf = (s) => [
+  [formatNumber(hours(s.claudeSeconds)), t("hours Claude worked")],
+  [formatNumber(hours(s.yourSeconds)), t("hours something was running")],
+  [formatNumber(s.prompts), t("messages you sent")],
+  [formatNumber(s.sessions), t("sessions")],
+  [formatNumber(s.edits), t("file edits")],
+  [formatNumber(s.toolCalls), t("tool calls")],
+  [s.busiestAtOnce, t("sessions at once, at most")],
+  [t("{n} days", { n: s.longestRun }), t("longest streak")],
+  [compact(s.tokens.output), t("tokens Claude wrote")],
+  [formatNumber(s.stops), t("times you stopped Claude")],
+  [formatNumber(s.images), t("images you pasted")],
+  [formatNumber(s.longestPrompt), t("characters in your longest message")],
+];
+
+function pageHtml(s) {
+  const title = TITLES[s.title] || TITLES.steady, peak = Math.max(...s.hours);
+  const rows = (list, value) => list.map((x) => `<div class="w-satir"><span>${esc(x.name)}</span><span>${esc(value(x))}</span></div>`).join("") || `<p class="bos">${esc(t("No data."))}</p>`;
+  return `<div class="w-duzen"><div>
+    <section class="w-hero"><small>${esc(periodName(state.period))}</small><h1>${esc(title.name)}</h1><p>${esc(title.line(s))}</p></section>
+    <div class="w-sayilar">${statsOf(s).map(([value, label]) => `<div class="w-sayi"><b>${esc(value)}</b><small>${esc(label)}</small></div>`).join("")}</div>
+    <section class="kart"><h2>${esc(t("When you write to Claude"))}${s.peakHour === null ? "" : ` · ${esc(t("most at {hour}", { hour: hourText(s.peakHour) }))}`}</h2>
+      <div class="w-saatler">${s.hours.map((n, h) => `<i class="${n === peak && n ? "tepe" : ""}" style="height:${peak ? Math.max(2, n / peak * 100) : 2}%" title="${esc(hourText(h))}: ${n}"></i>`).join("")}</div>
+      <div class="w-saat-alt"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div></section>
+    <div class="w-liste">
+      <section class="kart"><h2>${esc(t("Projects"))}</h2>${rows(s.topProjects, (p) => t("{n} h", { n: formatNumber(hours(p.seconds)) }))}</section>
+      <section class="kart"><h2>${esc(t("What Claude used most"))}</h2>${rows(s.topTools, (x) => formatNumber(x.count))}</section>
+    </div>
+    ${topTypo ? `<section class="kart" style="margin-top:12px"><h2>${esc(t("Your favourite typo"))}</h2><p style="margin:0">${esc(t("{word}: {n} times", { word: topTypo.word, n: formatNumber(topTypo.count) }))}</p></section>` : ""}
+    <p class="w-not">${esc(t("Times are estimates from your transcripts. Hours Claude worked add up sessions running side by side. Nothing leaves this computer."))}</p>
+  </div>
+  <aside class="w-kart"><canvas id="w-kart" width="${CARD.width}" height="${CARD.height}" role="img" aria-label="${esc(t("Card to share"))}"></canvas>
+    <div class="w-dugmeler"><button type="button" class="ana" data-do="save">${esc(t("Save image"))}</button><button type="button" data-do="copy">${esc(t("Copy"))}</button></div>
+    <label class="w-secim"><input type="checkbox" data-do="project" ${state.showProject ? "checked" : ""}>${esc(t("Show my top project on the card"))}</label>
+  </aside></div>`;
+}
+
+function drawCard(s) {
+  const canvas = $("#w-kart");
+  if (!canvas) return;
+  const c = canvas.getContext("2d"), { width: W, height: H } = CARD, M = 80;
+  const font = (weight, size) => `${weight} ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif`;
+  const ORANGE = "#fb7a01", WHITE = "#f7f6f2", MUTED = "#a3a29a";
+  const title = TITLES[s.title] || TITLES.steady;
+  const background = c.createLinearGradient(0, 0, W, H);
+  background.addColorStop(0, "#2a1606");
+  background.addColorStop(0.55, "#121210");
+  background.addColorStop(1, "#0c0c0b");
+  c.fillStyle = background;
+  c.fillRect(0, 0, W, H);
+  c.textBaseline = "alphabetic";
+  c.textAlign = "left";
+
+  c.fillStyle = ORANGE;
+  c.font = font(700, 34);
+  c.fillText("Claude Wrapped", M, 112);
+  c.fillStyle = MUTED;
+  c.font = font(500, 32);
+  c.textAlign = "right";
+  c.fillText(periodName(state.period), W - M, 112);
+  c.textAlign = "left";
+
+  let size = 104;
+  c.font = font(800, size);
+  while (c.measureText(title.name).width > W - M * 2 && size > 52) c.font = font(800, size -= 4);
+  c.fillStyle = WHITE;
+  c.fillText(title.name, M, 260);
+  c.fillStyle = MUTED;
+  size = 36;
+  c.font = font(500, size);
+  while (c.measureText(title.line(s)).width > W - M * 2 && size > 22) c.font = font(500, size -= 2);
+  c.fillText(title.line(s), M, 322);
+
+  c.fillStyle = ORANGE;
+  c.font = font(800, 210);
+  const big = formatNumber(hours(s.claudeSeconds));
+  c.fillText(big, M - 6, 560);
+  c.fillStyle = WHITE;
+  c.font = font(600, 40);
+  c.fillText(t("hours Claude worked"), M, 626);
+
+  const tiles = [
+    [formatNumber(s.prompts), t("messages you sent")],
+    [formatNumber(s.sessions), t("sessions")],
+    [formatNumber(s.edits), t("file edits")],
+    [t("{n} days", { n: s.longestRun }), t("longest streak")],
+    [s.busiestAtOnce, t("sessions at once, at most")],
+    [formatNumber(s.stops), t("times you stopped Claude")],
+  ];
+  const tileW = (W - M * 2 - 40) / 2;
+  tiles.forEach(([value, label], i) => {
+    const x = M + (i % 2) * (tileW + 40), y = 700 + Math.floor(i / 2) * 136;
+    c.fillStyle = WHITE;
+    c.font = font(700, 64);
+    c.fillText(String(value), x, y + 56);
+    c.fillStyle = MUTED;
+    let labelSize = 28;
+    c.font = font(500, labelSize);
+    while (c.measureText(label).width > tileW && labelSize > 18) c.font = font(500, labelSize -= 2);
+    c.fillText(label, x, y + 98);
+  });
+
+  const peak = Math.max(1, ...s.hours), chartTop = 1118, chartH = 86, gap = 6, bar = (W - M * 2 - gap * 23) / 24;
+  s.hours.forEach((n, h) => {
+    const height = Math.max(4, n / peak * chartH);
+    c.fillStyle = n === peak ? ORANGE : "rgba(247,246,242,.2)";
+    c.fillRect(M + h * (bar + gap), chartTop + chartH - height, bar, height);
+  });
+  c.fillStyle = MUTED;
+  c.font = font(500, 24);
+  c.fillText("00", M, chartTop + chartH + 34);
+  c.textAlign = "right";
+  c.fillText("23", W - M, chartTop + chartH + 34);
+  c.textAlign = "left";
+
+  c.fillStyle = MUTED;
+  c.font = font(500, 28);
+  const project = state.showProject && s.topProjects[0]?.name;
+  if (project) c.fillText(t("Most time on {name}", { name: project }).slice(0, 44), M, H - 56);
+  c.textAlign = "right";
+  c.fillStyle = WHITE;
+  c.font = font(600, 28);
+  c.fillText("speys.app/local", W - M, H - 56);
+  c.textAlign = "left";
+}
+
+function draw() {
+  const root = $("#icerik");
+  const scan = answer?.scan;
+  const hasData = answer?.data?.prompts > 0;
+  if (error && !answer) { root.innerHTML = `<p class="fark-kotu">${esc(error)}</p>`; return; }
+  const scanning = scan?.running ? t("Reading your sessions… {done}/{total}", { done: scan.done, total: scan.total || "…" }) : "";
+  const pills = [["30d", t("Last 30 days")], ...(answer?.periods || []).map((p) => [p, periodName(p)])].map(([id, label]) =>
+    `<button type="button" class="${id === state.period ? "secili" : ""}" data-period="${esc(id)}">${esc(label)}</button>`).join("");
+  const top = `<div class="w-ust"><div class="alt-sekmeler">${pills}</div><span class="w-durum">${esc(scanning)}${scan?.error ? esc(t("Could not read your sessions: {reason}", { reason: scan.error })) : ""}</span></div>`;
+  if (!hasData) {
+    root.innerHTML = `${top}<section class="kart w-bos"><h2>Claude Wrapped</h2><p class="soluk">${esc(!answer || scan?.running ? t("Reading your Claude Code sessions. The first time takes a little while.") : t("No Claude Code sessions in this period yet."))}</p></section>`;
+    return;
+  }
+  const scroll = scrollY;
+  root.innerHTML = top + pageHtml(answer.data);
+  drawCard(answer.data);
+  scrollTo(0, scroll);
+}
+
+async function load(refresh) {
+  try {
+    answer = await getJson(`./api/wrapped?period=${encodeURIComponent(state.period)}${refresh ? "&refresh=1" : ""}`);
+    error = "";
+  } catch (e) {
+    error = String(e.message || e);
+  }
+  draw();
+  clearTimeout(polling);
+  if (answer?.scan.running) polling = setTimeout(load, 1000);
+}
+
+/** The most repeated typo, if Typo Check has run; without it the card simply isn't there. */
+async function loadTypo() {
+  const typing = await getJson("/a/yazim/api/yazim").catch(() => null);
+  const first = typing?.kelimeler?.[0];
+  if (!Array.isArray(first)) return;
+  topTypo = { word: String(first[0]), count: Number(first[1]) || 0 };
+  draw();
+}
+
+const cardBlob = () => new Promise((done) => $("#w-kart").toBlob(done, "image/png"));
+document.addEventListener("click", async (e) => {
+  const pill = e.target.closest("[data-period]");
+  if (pill) { state.period = pill.dataset.period; return load(); }
+  const action = e.target.closest("[data-do]")?.dataset.do;
+  if (action === "save") {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(await cardBlob());
+    link.download = `claude-wrapped-${state.period}.png`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 10_000);
+  } else if (action === "copy") {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": cardBlob() })]);
+      notify(t("Copied. Paste it wherever you share."));
+    } catch {
+      notify(t("Could not copy here: use Save image."));
+    }
+  }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.dataset?.do !== "project") return;
+  state.showProject = e.target.checked;
+  drawCard(answer.data);
+});
+
+draw();
+load();
+loadTypo();
+</script>
+</body>
+</html>

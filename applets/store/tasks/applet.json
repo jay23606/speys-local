@@ -1,0 +1,18 @@
+{
+  "name": "Tasks",
+  "description": "Your projects' md task lists on one screen; everything you write goes to the file.",
+  "category": "Productivity",
+  "reads": "The task lists in your project folders, and a repo's GitHub issues when you add one",
+  "preinstalled": true,
+  "icon": "icon.svg",
+  "order": 10,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "projects",
+      "label": "Projects",
+      "hint": "Each project: id, name, folder, files or pattern, finishDate, doneList, icon. To keep an eye on a repo's GitHub issues and pull requests, add github (owner/repo); folder is then optional, and githubLists can narrow them, as in [\"pulls\"]",
+      "type": "json"
+    }
+  ]
+}

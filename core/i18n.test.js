@@ -22,7 +22,7 @@ function sources(dir) {
 const literals = (text) => [...text.matchAll(/(?<![\w.$])t\(\s*"((?:[^"\\]|\\.)*)"/g), ...text.matchAll(/(?<![\w.$])t\(\s*'((?:[^'\\]|\\.)*)'/g)]
   .map((m) => m[1].replace(/\\(.)/g, "$1"));
 
-const folders = [join(ROOT, "core"), ...readdirSync(join(ROOT, "applets", "official")).map((id) => join(ROOT, "applets", "official", id)).filter((p) => statSync(p).isDirectory())];
+const folders = [join(ROOT, "core"), ...readdirSync(join(ROOT, "applets", "store")).map((id) => join(ROOT, "applets", "store", id)).filter((p) => statSync(p).isDirectory())];
 
 for (const folder of folders) {
   test(`${folder.slice(ROOT.length + 1)}: every t() has a Turkish translation`, () => {
@@ -37,7 +37,7 @@ for (const folder of folders) {
     test(`${folder.slice(ROOT.length + 1)}: applet.json text has a Turkish translation`, () => {
       const a = JSON.parse(readFileSync(manifest, "utf8"));
       const messages = messagesOf(folder, "tr");
-      const texts = [a.name, a.description, ...(a.settings || []).flatMap((f) => [f.label, f.hint, f.placeholder])].filter(Boolean);
+      const texts = [a.name, a.description, a.category, a.reads, ...(a.settings || []).flatMap((f) => [f.label, f.hint, f.placeholder])].filter(Boolean);
       assert.deepEqual(texts.filter((k) => !(k in messages) && k !== a.name), []);
     });
   }

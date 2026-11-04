@@ -1,0 +1,17 @@
+{
+  "name": "Claude Files",
+  "description": "What has piled up in your Claude folders: disk use, memories and what is set up. Read-only.",
+  "category": "Claude Code",
+  "reads": "Your Claude folders (~/.claude), without changing anything",
+  "icon": "icon.svg",
+  "order": 22,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "folders",
+      "label": "Claude folders",
+      "hint": "If empty, ~/.claude, CLAUDE_CONFIG_DIR and any ~/.claude-* folder with sessions, e.g. [\"~/.claude\"]",
+      "type": "json"
+    }
+  ]
+}

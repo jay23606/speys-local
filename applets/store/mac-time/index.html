@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mac Time</title>
+<link rel="stylesheet" href="/kit.css">
+<style>
+main{max-width:920px;margin:0 auto;padding:20px 26px 60px}
+.mt-ust{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.mt-ust h1{font-size:20px;margin:0}
+.mt-ust button{border:1px solid var(--cizgi);background:var(--yuzey);color:var(--metin);border-radius:99px;width:30px;height:30px;font:inherit;cursor:pointer}
+.mt-ust button:disabled{opacity:.35;cursor:default}
+.mt-sayilar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.mt-sayi{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:12px;padding:12px 14px}
+.mt-sayi b{display:block;font-size:24px;line-height:1.15;font-variant-numeric:tabular-nums}
+.mt-sayi small{display:block;margin-top:2px}
+.mt-duzen{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.mt-satir{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;padding:7px 0;border-top:1px solid var(--cizgi)}
+.mt-satir:first-of-type{border-top:0}
+.mt-satir span:nth-child(2){color:var(--soluk);font-variant-numeric:tabular-nums}
+.mt-cubuk{grid-column:1/-1;height:4px;border-radius:2px;background:color-mix(in srgb,var(--metin) 8%,transparent);overflow:hidden}
+.mt-cubuk i{display:block;height:100%;background:var(--vurgu)}
+.mt-saatler,.mt-hafta{display:flex;align-items:flex-end;gap:3px;height:96px}
+.mt-saatler i{flex:1;border-radius:2px 2px 0 0;background:var(--vurgu)}
+.mt-alt{display:flex;justify-content:space-between;font-size:11px;color:var(--soluk);margin-top:4px}
+.mt-hafta{gap:8px;height:120px}
+.mt-gun{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;border:0;background:none;color:var(--soluk);font:inherit;font-size:11px;cursor:pointer;padding:0}
+.mt-gun i{width:100%;min-height:2px;border-radius:3px 3px 0 0;background:color-mix(in srgb,var(--metin) 18%,transparent)}
+.mt-gun.secili{color:var(--metin);font-weight:600}.mt-gun.secili i{background:var(--vurgu)}
+.mt-not{font-size:12px;color:var(--soluk);margin:10px 0 0}
+section.kart{margin-bottom:12px}
+@media (max-width:720px){main{padding:14px 16px 40px}.mt-sayilar{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-duzen{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<main id="icerik"></main>
+<script src="/kit.js"></script>
+<script>
+"use strict";
+document.title = "Mac Time";
+
+let data = null, error = "", day = "";
+
+function duration(seconds) {
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return t("{m} min", { m: minutes });
+  return t("{h} h {m} min", { h: Math.floor(minutes / 60), m: minutes % 60 });
+}
+const clock = (at) => (at ? new Date(at * 1000).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" }) : "—");
+const shiftDay = (iso, by) => { const d = new Date(`${iso}T12:00`); d.setDate(d.getDate() + by); return isoDay(d); };
+const stat = (value, label) => `<div class="mt-sayi"><b>${esc(value)}</b><small>${esc(label)}</small></div>`;
+
+function draw() {
+  const root = $("#icerik");
+  if (error && !data) { root.innerHTML = `<p class="fark-kotu">${esc(error)}</p>`; return; }
+  if (!data) { root.innerHTML = `<p class="bos">${esc(t("Loading…"))}</p>`; return; }
+  const peak = Math.max(...data.hours), weekPeak = Math.max(1, ...data.week.map((w) => w.total));
+  const head = `<div class="mt-ust"><button type="button" data-day="${esc(shiftDay(data.day, -1))}" aria-label="${esc(t("Previous day"))}">‹</button>
+    <h1>${esc(data.day === data.today ? t("Today") : formatDate(data.day, true))}</h1>
+    <button type="button" data-day="${esc(shiftDay(data.day, 1))}" aria-label="${esc(t("Next day"))}" ${data.day >= data.today ? "disabled" : ""}>›</button></div>`;
+  const stats = `<div class="mt-sayilar">${stat(duration(data.total), t("in use"))}${stat(data.screen === null ? "—" : duration(data.screen), t("screen on"))}${stat(clock(data.first), t("first"))}${stat(clock(data.last), t("last"))}</div>`;
+  const apps = data.apps.slice(0, 12).map((a) => `<div class="mt-satir"><span>${esc(a.name)}</span><span>${esc(duration(a.seconds))}</span><span class="mt-cubuk"><i style="width:${Math.max(1, a.seconds / data.apps[0].seconds * 100)}%"></i></span></div>`).join("");
+  const week = data.week.map((w) => `<button type="button" class="mt-gun${w.day === data.day ? " secili" : ""}" data-day="${esc(w.day)}" title="${esc(duration(w.total))}"><i style="height:${Math.max(2, w.total / weekPeak * 80)}%"></i>${esc(new Date(`${w.day}T12:00`).toLocaleDateString(LOCALE, { weekday: "short" }))}</button>`).join("");
+  const hours = data.hours.map((n, h) => `<i style="height:${n ? Math.max(3, n / peak * 100) : 0}%" title="${String(h).padStart(2, "0")}:00 · ${esc(duration(n))}"></i>`).join("");
+  const missing = !data.tracking ? `<p class="mt-not">${esc(t("App times come from the Usage module in the Speys Mac app. It hasn't written anything on this computer yet."))}</p>` : "";
+  root.innerHTML = `${head}${stats}<div class="mt-duzen">
+      <section class="kart"><h2>${esc(t("Apps"))}</h2>${apps || `<p class="bos">${esc(t("Nothing recorded for this day."))}</p>`}</section>
+      <div><section class="kart"><h2>${esc(t("Through the day"))}</h2><div class="mt-saatler">${hours}</div><div class="mt-alt"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div></section>
+      <section class="kart"><h2>${esc(t("Last 7 days"))}</h2><div class="mt-hafta">${week}</div></section></div>
+    </div>${missing}<p class="mt-not">${esc(t("Time with no keyboard or mouse for 5 minutes doesn't count, so a long video may not either. Only app names are recorded, never window titles."))}</p>`;
+}
+
+async function load() {
+  try {
+    data = await getJson(`./api/day${day ? `?day=${encodeURIComponent(day)}` : ""}`);
+    error = "";
+  } catch (e) {
+    error = String(e.message || e);
+  }
+  draw();
+}
+
+document.addEventListener("click", (e) => {
+  const target = e.target.closest("[data-day]");
+  if (target && !target.disabled) { day = target.dataset.day; load(); }
+});
+window.addEventListener("focus", () => { if (!isHidden()) load(); });
+
+draw();
+load();
+</script>
+</body>
+</html>

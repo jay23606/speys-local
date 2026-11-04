@@ -1,0 +1,12 @@
+{
+  "name": "Mac Time",
+  "description": "How long this Mac was in use today, and in which apps.",
+  "category": "Productivity",
+  "reads": "macOS's power log, and Speys Mac's usage files when it's installed",
+  "platforms": [
+    "macos"
+  ],
+  "icon": "icon.svg",
+  "order": 26,
+  "backend": "backend.js"
+}

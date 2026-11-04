@@ -85,9 +85,10 @@ function updateHtml() {
 function appletsHtml() {
   const row = (a) => `<div class="ay-ap${a.enabled === false ? " kapali" : ""}">${a.icon || ""}<div class="bilgi"><b>${esc(a.name)}</b><small>${esc(a.description || "")}</small></div>
     <button type="button" class="ay-anahtar${a.enabled === false ? "" : " on"}" role="switch" aria-checked="${a.enabled !== false}" aria-label="${esc(a.name)}" data-applet="${esc(a.id)}"></button></div>`;
-  const group = (title, visibility) => { const l = applets.filter((a) => a.visibility === visibility); return l.length ? `<h3 style="margin:12px 0 2px;font-size:12px;color:var(--soluk)">${esc(title)}</h3>${l.map(row).join("")}` : ""; };
-  return `<section class="kart"><h2>${esc(t("Applets"))}</h2>${group(t("Official"), "official")}${group(t("From the store"), "store")}${group(t("Custom"), "custom")}
-    <p class="ay-not">${t("Turning one off removes it from the sidebar; its data is not deleted. To add an applet, tell Claude: a folder under <code>applets/custom/</code> shows up here and in the sidebar.")}</p></section>`;
+  const group = (title, list) => (list.length ? `<h3 style="margin:12px 0 2px;font-size:12px;color:var(--soluk)">${esc(title)}</h3>${list.map(row).join("")}` : "");
+  const installed = applets.filter((a) => a.visibility === "store" && a.enabled !== false);
+  return `<section class="kart"><h2>${esc(t("Applets"))}</h2>${group(t("Installed"), installed)}${group(t("Custom"), applets.filter((a) => a.visibility === "custom"))}
+    <p class="ay-not">${t("Turning one off removes it from the sidebar; its data is not deleted. Add more from the <a href=\"#\" data-open-store>Store</a>, or tell Claude what you want: a folder under <code>applets/custom/</code> shows up here and in the sidebar.")}</p></section>`;
 }
 
 const valueHtml = (f) => {
@@ -111,7 +112,7 @@ function draw() {
   $("#icerik").innerHTML = `<div class="ay">${languageHtml()}${updateHtml()}${appletsHtml()}<p class="ay-kaynak">${t("Settings on this computer: <code>{file}</code>. Stays out of git.", { file: esc(data.file) })}</p>
     ${data.applets.map((p) => {
       const open = editing === p.id;
-      return `<section class="kart"><div class="ay-bas">${p.icon || ""}<h2>${esc(p.name)} <span class="ay-rozet">${p.visibility === "custom" ? `· ${esc(t("Custom"))}` : p.visibility === "store" ? `· ${esc(t("From the store"))}` : ""}</span></h2>
+      return `<section class="kart"><div class="ay-bas">${p.icon || ""}<h2>${esc(p.name)} <span class="ay-rozet">${p.visibility === "custom" ? `· ${esc(t("Custom"))}` : ""}</span></h2>
           ${!open && p.fields.length ? `<button type="button" data-edit="${esc(p.id)}">${esc(t("Edit"))}</button>` : ""}</div>
         ${p.fields.map((f) => fieldHtml(f, open)).join("") || `<p class="bos">${esc(t("No settings."))}</p>`}
         ${open ? `<div class="ay-alt"><button type="button" class="ana" data-save="${esc(p.id)}">${esc(t("Save"))}</button><button type="button" data-cancel>${esc(t("Cancel"))}</button>${error ? `<span class="ay-hata">${esc(error)}</span>` : ""}</div>` : ""}
@@ -176,9 +177,13 @@ document.addEventListener("click", async (e) => {
     const on = toggle.classList.contains("on");
     const r = await fetch("/api/applets", { method: "POST", headers: { "Content-Type": "application/json", "X-Panel": "1" }, body: JSON.stringify({ id: toggle.dataset.applet, enabled: !on }) });
     if (!r.ok) return notify(t("Could not change it."));
-    applets = await getJson("/api/applets");
+    [data, applets] = await Promise.all([getJson("/api/settings"), getJson("/api/applets")]);
     draw();
     return parent.refreshApplets?.();
+  }
+  if (e.target.closest("[data-open-store]")) {
+    e.preventDefault();
+    return parent.openApplet?.("store");
   }
   const edit = e.target.closest("[data-edit]");
   if (edit) { editing = edit.dataset.edit; error = ""; return draw(); }

@@ -1,0 +1,21 @@
+{
+  "How long this Mac was in use today, and in which apps.": "Bu Mac bugün ne kadar kullanıldı, hangi uygulamalarda.",
+  "{m} min": "{m} dk",
+  "{h} h {m} min": "{h} sa {m} dk",
+  "Loading…": "Yükleniyor…",
+  "Previous day": "Önceki gün",
+  "Next day": "Sonraki gün",
+  "Today": "Bugün",
+  "in use": "kullanıldı",
+  "screen on": "ekran açık",
+  "first": "ilk",
+  "last": "son",
+  "Apps": "Uygulamalar",
+  "Nothing recorded for this day.": "Bu gün için kayıt yok.",
+  "Through the day": "Gün içinde",
+  "Last 7 days": "Son 7 gün",
+  "App times come from the Usage module in the Speys Mac app. It hasn't written anything on this computer yet.": "Uygulama süreleri Speys Mac'in Kullanım modülünden gelir. Bu bilgisayarda henüz bir şey yazmadı.",
+  "Time with no keyboard or mouse for 5 minutes doesn't count, so a long video may not either. Only app names are recorded, never window titles.": "5 dakika klavye ve fareye dokunulmayan süre sayılmaz, bu yüzden uzun bir video da sayılmayabilir. Yalnızca uygulama adı kaydedilir, pencere başlığı asla.",
+  "Productivity": "Verimlilik",
+  "macOS's power log, and Speys Mac's usage files when it's installed": "macOS'un güç kaydı; Speys Mac kuruluysa onun kullanım dosyaları"
+}

@@ -2,27 +2,49 @@
 // Binds to 127.0.0.1 only; nothing is sent out.
 import { execFile } from "node:child_process";
 import { createServer } from "node:http";
-import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { extname, join, resolve, sep } from "node:path";
+import { basename, dirname, extname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { SOURCE_LANGUAGE, messagesOf, translator } from "../lib/i18n.js";
 import { seedDemo } from "./demo.js";
-import { installApplet, installedApplets, readCatalog, removeApplet } from "./store.js";
+import { screenshotFile, screenshots, startingInstalled } from "./store.js";
 
 const ROOT = resolve(import.meta.dirname, "..");
-// Everything lives in data/ next to the code, out of git. Each folder in it is a workspace: its own settings.json, and
-// applet data under apps/<id>. "main" is the everyday one, "demo" is rebuilt from core/demo.js.
+// Everything lives next to the code, out of git. A workspace is its own settings.json and applet data under apps/<id>:
+// data/ is the everyday one ("main"), any other sits beside it as data.<id>; data.demo is rebuilt from core/demo.js.
 const BASE = process.env.SPEYS_LOCAL_HOME || join(ROOT, "data");
-mkdirSync(BASE, { recursive: true });
-try {
-  chmodSync(BASE, 0o700); // settings and data are for this account only
-} catch {
-  // a filesystem without permissions
-}
-const ACTIVE_FILE = join(BASE, "workspace.json");
 const MAIN = "main", DEMO = "demo";
-const workspaceFolder = (id) => join(BASE, id);
+const SIBLING = `${basename(BASE)}.`;
+const workspaceFolder = (id) => (id === MAIN ? BASE : join(dirname(BASE), SIBLING + id));
+const ACTIVE_FILE = join(BASE, "workspace.json");
+
+/** Before November 2026 every workspace was a folder inside data/ (data/main, data/demo): moves them once. */
+function moveOldWorkspaces() {
+  const old = join(BASE, MAIN);
+  if (!existsSync(old) || existsSync(join(BASE, "settings.json"))) return;
+  for (const f of readdirSync(BASE)) {
+    if (f === MAIN || f.startsWith(".") || !statSync(join(BASE, f)).isDirectory()) continue;
+    if (!existsSync(workspaceFolder(f))) renameSync(join(BASE, f), workspaceFolder(f));
+  }
+  for (const f of readdirSync(old)) {
+    if (!existsSync(join(BASE, f))) renameSync(join(old, f), join(BASE, f));
+  }
+  try {
+    rmdirSync(old); // anything left had a name already taken in data/, and stays where it was
+  } catch {
+    // not empty
+  }
+}
+mkdirSync(BASE, { recursive: true });
+moveOldWorkspaces();
+for (const folder of [BASE, workspaceFolder(DEMO)]) {
+  try {
+    if (existsSync(folder)) chmodSync(folder, 0o700); // settings and data are for this account only
+  } catch {
+    // a filesystem without permissions
+  }
+}
 let DATA, SETTINGS;
 function enterWorkspace(id) {
   DATA = workspaceFolder(id);
@@ -38,15 +60,17 @@ const activeWorkspace = () => {
   }
 };
 enterWorkspace(activeWorkspace());
-const OFFICIAL_DIR = join(ROOT, "applets", "official");
 const STORE_DIR = join(ROOT, "applets", "store");
 
-/** The folder sets visibility: `applets/custom/` stays out of git, so it cannot reach others by accident. */
+/**
+ * The folder sets visibility. `applets/store/` is in git: everyone gets it, and an applet there shows up once it is
+ * installed from the Store. `applets/custom/` stays out of git, so it cannot reach others by accident.
+ */
 const SOURCES = [
-  { dir: join("applets", "official"), visibility: "official" },
   { dir: join("applets", "store"), visibility: "store" },
   { dir: join("applets", "custom"), visibility: "custom" },
 ];
+const ID = /^[a-z0-9][a-z0-9-]{0,40}$/;
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -72,25 +96,33 @@ function writeAppletSettings(id, value) {
   writeFileSync(SETTINGS, JSON.stringify(all, null, 2) + "\n");
 }
 
-/** Custom is read after official: a copy with the same id replaces the official applet. */
-function findApplets() {
-  const found = new Map();
-  for (const { dir, visibility } of SOURCES) {
-    const base = join(ROOT, dir);
-    if (!existsSync(base)) continue;
-    for (const id of readdirSync(base)) {
-      const folder = join(base, id);
-      const file = join(folder, "applet.json");
-      if (id.startsWith(".") || !statSync(folder).isDirectory() || !existsSync(file)) continue;
-      try {
-        found.set(id, { ...JSON.parse(readFileSync(file, "utf8")), id, folder, visibility }); // the manifest cannot set these
-      } catch (e) {
-        found.set(id, { id, folder, visibility, name: id, error: `Could not read applet.json: ${e.message}` });
-      }
+function readFolder({ dir, visibility }) {
+  const base = join(ROOT, dir), found = [];
+  if (!existsSync(base)) return found;
+  for (const id of readdirSync(base)) {
+    const folder = join(base, id);
+    const file = join(folder, "applet.json");
+    if (id.startsWith(".") || !statSync(folder).isDirectory() || !existsSync(file)) continue;
+    try {
+      found.push({ ...JSON.parse(readFileSync(file, "utf8")), id, folder, visibility }); // the manifest cannot set these
+    } catch (e) {
+      found.push({ id, folder, visibility, name: id, error: `Could not read applet.json: ${e.message}` });
     }
   }
-  return [...found.values()].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+  return found;
 }
+
+const byOrder = (a, b) => (a.order ?? 100) - (b.order ?? 100);
+
+/** Custom is read after the Store: a copy with the same id replaces the Store applet. */
+function findApplets() {
+  const found = new Map();
+  for (const source of SOURCES) for (const a of readFolder(source)) found.set(a.id, a);
+  return [...found.values()].sort(byOrder);
+}
+
+/** Every Store applet, also one a custom copy replaces. */
+const storeApplets = () => readFolder(SOURCES[0]).sort(byOrder);
 
 /**
  * A backend loads on its first request: the dashboard opens fast and an unopened applet holds no memory.
@@ -145,9 +177,9 @@ function languageOf(req) {
 let activeLanguage = SOURCE_LANGUAGE;
 const translatorOf = (applet) => translator(() => messagesOf(applet.folder, activeLanguage));
 
-const publicView = (applet, disabled = disabledApplets(), t = translatorOf(applet)) => ({
+const publicView = (applet, shown = shownApplets(), t = translatorOf(applet)) => ({
   id: applet.id,
-  enabled: !disabled.has(applet.id),
+  enabled: shown(applet),
   name: applet.name || applet.id, // applet names are the same in every language
   description: applet.description ? t(applet.description) : "",
   icon: iconOf(applet),
@@ -268,7 +300,7 @@ function settingsView(applets) {
   const all = readSettings();
   return {
     file: SETTINGS,
-    applets: applets.filter((a) => (a.settings || []).length).map((a) => {
+    applets: applets.filter((a) => (a.settings || []).length && shownApplets()(a)).map((a) => {
       const t = translatorOf(a);
       return {
         id: a.id, name: a.name || a.id, visibility: a.visibility, icon: iconOf(a),
@@ -283,15 +315,33 @@ function settingsView(applets) {
   };
 }
 
-const disabledApplets = () => new Set(readSettings()._dashboard?.disabled || []);
+/**
+ * A Store applet shows up once it is installed; a custom one unless it is turned off. Removing or turning one off keeps
+ * its data. A Store applet that isn't installed also has no page and no endpoints; a turned-off custom one keeps them.
+ */
+function shownApplets() {
+  const panel = readSettings()._dashboard || {};
+  const installed = new Set(panel.installed || []), disabled = new Set(panel.disabled || []);
+  return (a) => (a.visibility === "custom" ? !disabled.has(a.id) : installed.has(a.id));
+}
 
-/** A disabled applet leaves the sidebar; its data and endpoints stay (other applets can still read them). */
-function setDisabled(id, off) {
+function setListed(list, id, on) {
   const all = readSettings();
   const panel = (all._dashboard ??= {});
-  const set = new Set(panel.disabled || []);
-  off ? set.add(id) : set.delete(id);
-  panel.disabled = [...set].sort();
+  const set = new Set(panel[list] || []);
+  on ? set.add(id) : set.delete(id);
+  panel[list] = [...set].sort();
+  writeAll(all);
+}
+
+/** A workspace gets its installed list once, the first time it is opened; `disabled` keeps only custom applets after that. */
+function ensureInstalled() {
+  const all = readSettings();
+  if (Array.isArray(all._dashboard?.installed)) return;
+  const panel = (all._dashboard ??= {});
+  const store = storeApplets();
+  panel.installed = startingInstalled(store, { inUse: existsSync(SETTINGS), disabled: panel.disabled || [] });
+  if (panel.disabled) panel.disabled = panel.disabled.filter((id) => !store.some((a) => a.id === id));
   writeAll(all);
 }
 
@@ -364,6 +414,7 @@ function serveStatic(applet, path, res) {
 }
 
 export async function startDashboard({ port = 3400 }) {
+  ensureInstalled();
   const applets = findApplets();
   const startStamp = serverStamp(applets);
   /** A new folder shows up without a restart, a removed one goes; running backends are kept. */
@@ -430,13 +481,15 @@ export async function startDashboard({ port = 3400 }) {
       if (req.method === "POST") {
         if (req.headers["x-panel"] !== "1") return send(res, 403, { error: "forbidden" });
         const q = JSON.parse((await readBody(req)) || "{}");
-        if (!applets.some((a) => a.id === q.id)) return send(res, 400, { error: "no such applet" });
-        setDisabled(q.id, !q.enabled);
+        const applet = applets.find((a) => a.id === q.id);
+        if (!applet) return send(res, 400, { error: "no such applet" });
+        if (applet.visibility === "custom") setListed("disabled", q.id, !q.enabled);
+        else setListed("installed", q.id, !!q.enabled);
         return send(res, 200, { ok: true });
       }
       syncApplets();
-      const disabled = disabledApplets();
-      return send(res, 200, applets.map((a) => publicView(a, disabled)));
+      const shown = shownApplets();
+      return send(res, 200, applets.map((a) => publicView(a, shown)));
     }
     if (url.pathname === "/api/version") {
       // Server code changed: restart under launchd; the page notices from `boot` and reloads
@@ -471,10 +524,11 @@ export async function startDashboard({ port = 3400 }) {
           if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(id ?? "")) throw new Error(coreT("Use letters and digits for the name."));
           if (id !== MAIN && id !== DEMO && !q.create && !existsSync(workspaceFolder(id))) throw new Error("no such workspace");
           mkdirSync(workspaceFolder(id), { recursive: true });
-          if (id === DEMO) await seedDemo(workspaceFolder(DEMO), { disabled: applets.filter((a) => a.visibility !== "official").map((a) => a.id) });
+          if (id === DEMO) await seedDemo(workspaceFolder(DEMO), { disabled: applets.filter((a) => a.visibility === "custom").map((a) => a.id) });
           mkdirSync(BASE, { recursive: true });
           writeFileSync(ACTIVE_FILE, JSON.stringify({ active: id }) + "\n");
           enterWorkspace(id);
+          ensureInstalled();
           // Backends hold their data folder: they are created again on the next request
           for (const a of applets) {
             delete a.handle;
@@ -486,36 +540,38 @@ export async function startDashboard({ port = 3400 }) {
           return send(res, 400, { error: String(e.message || e) });
         }
       }
-      const others = readdirSync(BASE).filter((f) => !f.startsWith(".") && f !== MAIN && f !== DEMO && statSync(join(BASE, f)).isDirectory());
+      const others = readdirSync(dirname(BASE))
+        .filter((f) => f.startsWith(SIBLING) && statSync(join(dirname(BASE), f)).isDirectory())
+        .map((f) => f.slice(SIBLING.length))
+        .filter((id) => id !== MAIN && id !== DEMO && /^[a-z0-9][a-z0-9-]{0,40}$/.test(id));
       return send(res, 200, { active: activeWorkspace(), list: [MAIN, DEMO, ...others.sort()] });
     }
     if (url.pathname === "/store") return sendFile(res, join(CORE_FOLDER, "store.html"));
     if (url.pathname === "/api/store" && req.method === "GET") {
-      const installed = installedApplets(STORE_DIR);
-      return send(res, 200, { applets: readCatalog(ROOT).map((a) => ({ ...a, installed: installed[a.id] ?? null })) });
+      const installed = new Set(readSettings()._dashboard?.installed || []);
+      const custom = new Set(applets.filter((a) => a.visibility === "custom").map((a) => a.id));
+      return send(res, 200, {
+        applets: storeApplets().map((a) => {
+          const t = translatorOf(a);
+          return {
+            id: a.id, name: a.name || a.id, description: a.description ? t(a.description) : "", author: a.author || "Speys",
+            category: a.category ? t(a.category) : null, reads: a.reads ? t(a.reads) : null, platforms: a.platforms || [],
+            icon: iconOf(a), shots: screenshots(a.folder), installed: installed.has(a.id), customCopy: custom.has(a.id),
+          };
+        }),
+      });
+    }
+    if (url.pathname.startsWith("/store-media/")) {
+      const [id, name] = url.pathname.slice("/store-media/".length).split("/");
+      const file = ID.test(id) ? screenshotFile(join(STORE_DIR, id), name) : null;
+      return file ? sendFile(res, file) : send(res, 404, { error: "not found" });
     }
     if (url.pathname === "/api/store/install" || url.pathname === "/api/store/remove") {
       if (req.method !== "POST" || req.headers["x-panel"] !== "1") return send(res, 403, { error: "forbidden" });
-      try {
-        const { id } = JSON.parse((await readBody(req)) || "{}");
-        if (url.pathname.endsWith("/remove")) {
-          removeApplet(id, STORE_DIR);
-          syncApplets();
-          return send(res, 200, { ok: true });
-        }
-        const entry = readCatalog(ROOT).find((a) => a.id === id);
-        if (!entry) return send(res, 400, { error: coreT("This applet is not in the store.") });
-        const update = !!installedApplets(STORE_DIR)[id];
-        await installApplet(entry, STORE_DIR, { reserved: existsSync(OFFICIAL_DIR) ? readdirSync(OFFICIAL_DIR) : [] });
-        syncApplets();
-        if (!update) return send(res, 200, { ok: true });
-        // A loaded backend keeps its old code until the process restarts
-        const managed = process.env.XPC_SERVICE_NAME === "app.speys.local";
-        if (managed) setTimeout(() => process.exit(0), 300);
-        return send(res, 200, { ok: true, restarting: managed, restartNeeded: !managed });
-      } catch (e) {
-        return send(res, 400, { error: String(e.message || e) });
-      }
+      const { id } = JSON.parse((await readBody(req)) || "{}");
+      if (!storeApplets().some((a) => a.id === id)) return send(res, 400, { error: coreT("This applet is not in the store.") });
+      setListed("installed", id, url.pathname.endsWith("/install"));
+      return send(res, 200, { ok: true });
     }
     if (url.pathname === "/settings") return sendFile(res, join(import.meta.dirname, "settings.html"));
     if (url.pathname === "/api/settings") {
@@ -531,7 +587,7 @@ export async function startDashboard({ port = 3400 }) {
 
     const hit = /^\/a\/([^/]+)(\/.*)?$/.exec(url.pathname);
     const applet = hit && applets.find((m) => m.id === hit[1]);
-    if (!applet) return send(res, 404, { error: "not found" });
+    if (!applet || (applet.visibility === "store" && !shownApplets()(applet))) return send(res, 404, { error: "not found" });
     // The trailing / matters: applet pages make requests relative to their own address
     if (!hit[2]) {
       res.writeHead(302, { Location: `/a/${applet.id}/${url.search}` });

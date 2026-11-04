@@ -6,12 +6,14 @@
 <title>Speys Local Dashboard</title>
 <link rel="icon" href="/logo.svg">
 <style>
-:root{--bg:#f7f7f4;--side:#efeee9;--line:#e2e1da;--text:#1b1b18;--muted:#73726b;--hover:rgba(0,0,0,.05);--on:#fff;--brand:#fb7a01;--bad:#dc2626}
-@media (prefers-color-scheme:dark){:root{--bg:#0f0f0d;--side:#181816;--line:#2c2c28;--text:#ecebe6;--muted:#97968e;--hover:rgba(255,255,255,.06);--on:#26261f}}
+:root{--bg:#f6f6f7;--side:#efeff1;--line:#e4e4e7;--text:#18181b;--muted:#71717a;--hover:rgba(0,0,0,.05);--on:#fff;--brand:#fb7a01;--bad:#dc2626}
+@media (prefers-color-scheme:dark){:root{--bg:#0e0e10;--side:#17171a;--line:#2a2a2f;--text:#ececef;--muted:#9a9aa3;--hover:rgba(255,255,255,.06);--on:#26262b}}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{display:flex;background:var(--bg);color:var(--text);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-aside{width:232px;flex:none;display:flex;flex-direction:column;gap:18px;padding:14px 10px;background:var(--side);border-right:1px solid var(--line);overflow-y:auto}
+aside{width:232px;flex:none;display:flex;flex-direction:column;gap:14px;padding:14px 10px 10px;background:var(--side);border-right:1px solid var(--line);overflow:hidden}
+/* Only the applet list scrolls: the name stays on top, Store and Settings at the bottom */
+.kaydir{flex:1;min-height:0;display:flex;flex-direction:column;gap:18px;margin:0 -10px;padding:0 10px 8px;overflow-y:auto}
 .brand{display:flex;align-items:center;gap:10px;padding:2px 6px}
 .brand img{width:30px;height:30px;border-radius:7px}
 .brand b{display:block;font-size:14px;line-height:1.2}
@@ -26,7 +28,7 @@ nav .name{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 nav .bad{margin-left:auto;width:7px;height:7px;flex:none;border-radius:50%;background:var(--bad)}
 .empty{margin:0;padding:0 8px;font-size:12px;color:var(--muted)}
 code{font:12px ui-monospace,Menlo,Consolas,monospace}
-.alt{margin-top:auto}
+.alt{flex:none;margin:0 -10px;padding:10px 10px 0;border-top:1px solid var(--line)}
 .new-applet{display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;border:0;border-radius:8px;background:none;color:var(--muted);font:inherit;text-align:left;cursor:pointer}
 .new-applet:hover{background:var(--hover);color:inherit}
 .new-applet svg{width:18px;height:18px;flex:none}
@@ -62,16 +64,17 @@ iframe{flex:1;width:100%;height:100%;border:0;background:var(--bg)}
 iframe[hidden]{display:none}
 .message{margin:auto;max-width:440px;padding:24px;text-align:center;color:var(--muted)}
 .message b{display:block;margin-bottom:6px;color:var(--text);font-size:16px}
-@media (max-width:720px){aside{width:58px;padding:12px 8px}.brand{justify-content:center;padding:0}.brand div,h2,.empty,.update,nav .name{display:none}nav a{justify-content:center}}
+@media (max-width:720px){aside{width:58px;padding:12px 8px}.kaydir,.alt{margin:0 -8px;padding-left:8px;padding-right:8px}.brand{justify-content:center;padding:0}.brand div,h2,.empty,.update,nav .name{display:none}nav a{justify-content:center}}
 </style>
 </head>
 <body>
 <aside>
   <div class="brand"><img src="/logo.svg" alt=""><div><b>Speys Local</b><select id="workspace" title=""></select></div></div>
-  <section id="dashboards-section"><h2 id="dashboards-title"></h2><nav id="dashboards"></nav></section>
-  <section><h2 id="official-title"></h2><nav id="official"></nav></section>
-  <section id="store-section"><h2 id="store-title"></h2><nav id="store"></nav></section>
-  <section><h2 id="custom-title"></h2><nav id="custom"></nav><button type="button" class="new-applet" id="new-applet"></button></section>
+  <div class="kaydir">
+    <section id="dashboards-section"><h2 id="dashboards-title"></h2><nav id="dashboards"></nav></section>
+    <section id="store-section"><h2 id="store-title"></h2><nav id="store"></nav></section>
+    <section><h2 id="custom-title"></h2><nav id="custom"></nav><button type="button" class="new-applet" id="new-applet"></button></section>
+  </div>
   <section class="alt">
     <div class="update" id="update" hidden><p id="update-text"></p><div><button type="button" id="update-see"></button><button type="button" id="update-later"></button></div></div>
     <nav id="system"></nav>
@@ -85,11 +88,10 @@ if (!window.I18N) setTimeout(() => location.reload(), 1000);
 </script>
 <script>
 $("#dashboards-title").textContent = t("Dashboards");
-$("#official-title").textContent = t("Official");
 $("#custom-title").textContent = t("Custom");
-$("#store-title").textContent = t("From the store");
+$("#store-title").textContent = t("Applets");
 const FALLBACK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>';
-const nav = { dashboards: document.getElementById("dashboards"), official: document.getElementById("official"), custom: document.getElementById("custom"), store: document.getElementById("store"), system: document.getElementById("system") };
+const nav = { dashboards: document.getElementById("dashboards"), custom: document.getElementById("custom"), store: document.getElementById("store"), system: document.getElementById("system") };
 const SETTINGS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>';
 const main = document.getElementById("main");
 let applets = [];
@@ -97,13 +99,36 @@ let shown = null;
 const frames = new Map();
 const pendingHash = {};
 
+// The address carries the place inside the applet too: #/<id>/<the applet's own hash>, so it can be shared and reopened
+const route = () => {
+  const [id, ...inner] = location.hash.slice(2).split("/");
+  return { id: decodeURIComponent(id), inner: inner.join("/") };
+};
+const placeIn = (frame) => {
+  try {
+    return frame.contentWindow.location.href === "about:blank" ? null : frame.contentWindow.location.hash.slice(1);
+  } catch {
+    return null; // a frame on another address
+  }
+};
+function goInside(frame, inner) {
+  try {
+    if (placeIn(frame) !== inner) frame.contentWindow.location.hash = inner;
+  } catch { /* a frame on another address */ }
+}
+/** The address follows the visible applet without adding a step to the history (the frame keeps its own). */
+function follow(id, frame) {
+  const inner = placeIn(frame);
+  if (shown !== id || inner === null) return;
+  const next = `#/${id}${inner ? `/${inner}` : ""}`;
+  if (location.hash !== next) history.replaceState(null, "", next);
+}
+
 /** One applet opens another (and a place inside it). */
 window.openApplet = (id, inner) => {
-  const frame = frames.get(id);
-  if (inner && frame) frame.contentWindow.location.hash = inner;
-  else if (inner) pendingHash[id] = inner;
-  if (location.hash === `#/${id}`) return render();
-  location.hash = `#/${id}`;
+  const next = `#/${id}${inner ? `/${inner}` : ""}`;
+  if (location.hash === next) return render();
+  location.hash = next;
 };
 
 function show(message, detail) {
@@ -138,29 +163,44 @@ document.getElementById("workspace").addEventListener("change", async (e) => {
 });
 
 function render() {
-  const current = location.hash.slice(2);
+  const { id: current, inner } = route();
   const open = applets.filter((m) => m.enabled !== false);
   const applet = open.find((m) => m.id === current) || open[0];
   for (const a of document.querySelectorAll("nav a")) a.classList.toggle("on", a.dataset.id === applet?.id);
   if (!applet) return show(t("No applets yet"), t("Add an applet under applets/custom/."));
   document.title = `${applet.name} · Speys Local Dashboard`;
-  if (shown === applet.id) return;
+  if (shown === applet.id) {
+    // Same applet: a place in the address is opened; without one (its link in the sidebar) it stays where it was
+    const frame = frames.get(applet.id);
+    if (frame && inner) goInside(frame, inner);
+    if (frame) follow(applet.id, frame);
+    return;
+  }
   shown = applet.id;
   if (applet.error) return show(t("{name} could not be opened", { name: applet.name }), applet.error);
   // An opened frame stays and is only hidden: switching is instant and its work is not lost
   let frame = frames.get(applet.id);
   if (!frame) {
     frame = document.createElement("iframe");
-    frame.src = applet.url + (pendingHash[applet.id] ? `#${pendingHash[applet.id]}` : "");
+    const place = inner || pendingHash[applet.id];
+    frame.src = applet.url + (place ? `#${place}` : "");
     delete pendingHash[applet.id];
     frame.title = applet.name;
+    const id = applet.id;
+    frame.addEventListener("load", () => {
+      follow(id, frame);
+      try { frame.contentWindow.addEventListener("hashchange", () => follow(id, frame)); } catch { /* frame on another address */ }
+    });
     frames.set(applet.id, frame);
+  } else if (inner) {
+    goInside(frame, inner);
   }
   main.querySelector(".message")?.remove();
   if (!frame.isConnected) main.append(frame);
   for (const f of frames.values()) f.hidden = f !== frame;
   // An applet coming back from the background refreshes its data
   try { frame.contentWindow?.dispatchEvent(new Event("focus")); } catch { /* frame on another address */ }
+  follow(applet.id, frame);
 }
 
 function link(applet) {
@@ -304,7 +344,7 @@ async function start() {
     if (kalan?.hash) pendingHash[kalan.id] = kalan.hash;
   } catch { /* private window */ }
   applets = await untilServerAnswers("/api/applets");
-  applets.push({ id: "store", name: t("Store"), description: t("Applets written by other people"), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5V20h16V9.5M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M10 20v-5h4v5"/></svg>', visibility: "system", url: "/store" });
+  applets.push({ id: "store", name: t("Store"), description: t("Applets you add with one click"), icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5V20h16V9.5M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M10 20v-5h4v5"/></svg>', visibility: "system", url: "/store" });
   applets.push({ id: "settings", name: t("Settings"), description: t("Settings on this computer"), icon: SETTINGS_ICON, visibility: "system", url: "/settings" });
   drawNav();
   render();

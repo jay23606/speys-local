@@ -77,7 +77,7 @@ Settings and data live in `data/` next to the code. It stays out of git and upda
 
 Session status, notifications and sound run on a Claude Code hook. Speys Local adds it to `~/.claude/settings.json` when you first open it: only its own entries, with a backup next to the file. Turn it off with the switch on the Claude Sessions page and it is removed. If you delete the folder first, the entry stays in the settings file but does nothing.
 
-Speys Local is built and tested on macOS. It hasn't been tried on Windows or Linux yet, so expect rough edges there. Sound and notifications work on macOS for now. It comes with 13 sounds of its own. To add yours, put audio files in `data/main/apps/claude/sounds/`.
+Speys Local is built and tested on macOS. It hasn't been tried on Windows or Linux yet, so expect rough edges there. Sound and notifications work on macOS for now. It comes with 13 sounds of its own. To add yours, put audio files in `data/apps/claude/sounds/`.
 
 ### Uninstall
 
@@ -85,7 +85,7 @@ Turn the hook off on the Claude Sessions page, run `node start.js --uninstall` i
 
 ## 🧩 Applets
 
-Everything is an applet. Turn off what you don't need in Settings.
+Everything is an applet, and every applet is in the Store. Today, Tasks and Claude Sessions come installed; the rest is one click away, and removing one keeps its data.
 
 | | Applet | What it does | Needs |
 |---|---|---|---|
@@ -97,6 +97,10 @@ Everything is an applet. Turn off what you don't need in Settings.
 | 🎬 | **Social Media Planner** | Content calendar: accounts, videos, posts, numbers | Nothing |
 | 🔍 | **SEO** | Search Console, post checks, search previews | Your sites |
 | 📚 | **OwnLearn** | Learn SQL from your own repo's code | A repo path |
+| 🎁 | **Claude Wrapped** | Your month with Claude Code in numbers, and a card to share | Claude Code logs |
+| 🗂️ | **Claude Files** | What has piled up in your Claude folders, read-only | Claude Code folders |
+| ⏱️ | **Mac Time** | How long this Mac was in use today, and in which apps | macOS |
+| 🗡️ | **Slay the Spire 2** | Your runs, read from the game's own save folder | The game |
 
 <table>
   <tr>
@@ -123,13 +127,12 @@ applets/custom/my-notes/
 
 | Folder | What goes there | In git |
 |---|---|---|
-| `applets/official/` | Applets that ship to everyone | Yes |
-| `applets/store/` | Applets installed from the Store | No |
-| `applets/custom/` | Applets on this computer only; a copy with the same id replaces an official one | No |
+| `applets/store/` | Every applet that ships to everyone, listed in the Store | Yes |
+| `applets/custom/` | Applets on this computer only; a copy with the same id replaces the Store one | No |
 
 ## 🏪 Store
 
-The Store is open but still empty: applets written by other people will install from here with one click. Every version is reviewed before it's listed, and nothing updates by itself. Wrote one? [Send it in](CONTRIBUTING.md#store).
+Every applet lives in this repo and shows up in the Store, with screenshots and what it reads. Installing one adds it to the sidebar; nothing is downloaded, and an applet you haven't installed runs no code. Every applet is reviewed before it's added and updates with Speys Local, only when you click. Wrote one? [Send it in](CONTRIBUTING.md#store).
 
 ## 🗂️ Workspaces
 
@@ -151,4 +154,4 @@ Run the tests with `npm test`.
 
 ## 📄 License
 
-[MIT](LICENSE). The Typo Check word lists are under CC BY-SA 4.0; see [their notice](applets/official/yazim/sozluk/README.md).
+[MIT](LICENSE). The Typo Check word lists are under CC BY-SA 4.0; see [their notice](applets/store/yazim/sozluk/README.md).

@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slay the Spire 2</title>
+<link rel="stylesheet" href="/kit.css">
+<style>
+:root{--oda-monster:var(--gri);--oda-elite:var(--turuncu);--oda-boss:var(--kirmizi);--oda-rest_site:var(--yesil);--oda-shop:var(--mavi);--oda-event:var(--mor);--oda-treasure:#d4a72c;--oda-ancient:#3fb8c4;--oda-unknown:var(--gri)}
+main{max-width:1180px;margin:0 auto;padding:20px 26px 60px;display:grid;gap:16px}
+section.kart h2{margin:0 0 10px;font-size:13px}
+.st-arac{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.st-arac .alt-sekmeler{margin:0}
+.st-secim{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:99px;padding:4px 10px;font-size:13px;font-weight:600;background:color-mix(in srgb,var(--vurgu) 16%,transparent);color:var(--vurgu)}
+.st-arac small{margin-left:auto}
+.st-sayilar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.st-sayilar>div{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:12px;padding:14px 16px;min-width:0}
+.st-sayilar b{display:block;white-space:nowrap;font-size:clamp(22px,2.6vw,30px);line-height:1.15;font-variant-numeric:tabular-nums}
+.st-sayilar small{display:block;margin-top:3px}
+.st-form{display:flex;align-items:center;gap:12px;background:var(--yuzey);border:1px solid var(--cizgi);border-radius:12px;padding:10px 16px}
+.st-form small{flex-shrink:0}
+.st-form div{display:flex;gap:3px;flex:1;min-width:0}
+.st-form button{flex:1;max-width:40px;height:18px;border:0;border-radius:4px;padding:0;background:color-mix(in srgb,var(--metin) 22%,transparent)}
+.st-form button.win{background:var(--yesil)}.st-form button.left{background:color-mix(in srgb,var(--metin) 9%,transparent)}
+.st-form button:hover{outline:2px solid var(--metin);outline-offset:1px}
+.st-karakterler{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:12px}
+.st-karakter{display:flex;gap:12px;align-items:center;border:1px solid var(--cizgi);border-radius:12px;background:var(--yuzey);padding:10px;text-align:left;min-width:0}
+.st-karakter:hover{border-color:var(--soluk)}
+.st-karakter.secili{border-color:var(--vurgu);box-shadow:0 0 0 1px var(--vurgu)}
+.st-karakter>div{min-width:0;flex:1}
+.st-karakter img{width:54px;height:68px;border-radius:8px;object-fit:cover;object-position:top;flex-shrink:0}
+.st-karakter b{display:block;font-size:14px}
+.st-karakter strong{display:block;white-space:nowrap;font-size:20px;line-height:1.25;font-variant-numeric:tabular-nums}
+.st-karakter small{display:block;font-size:11px;font-variant-numeric:tabular-nums}
+.st-karakter strong small{display:inline;font-weight:400;margin-left:2px}
+.st-duzen{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.st-yan{display:grid;gap:16px;position:sticky;top:16px}
+.st-gun{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin:18px 0 4px;font-size:13px;font-weight:600}
+.st-gun:first-child{margin-top:0}
+.st-gun small{font-weight:400}
+.st-satir{display:grid;grid-template-columns:auto minmax(0,1fr) 120px 76px;gap:12px;align-items:center;width:100%;border:0;border-left:3px solid var(--cizgi);border-radius:0 8px 8px 0;background:none;padding:7px 8px 7px 10px;margin-top:4px;text-align:left}
+.st-satir.win{border-left-color:var(--yesil)}
+.st-satir.now{border-left-color:var(--vurgu)}
+.st-satir .sonuc-now{color:var(--vurgu);font-weight:600}
+.st-cubuk.now i{background:var(--vurgu)}
+.st-simdi .st-satir:first-of-type{margin-top:0}
+.st-satir:hover{background:var(--yuzey2)}
+.st-yuzler{display:flex;width:62px}
+.st-yuzler img{width:34px;height:42px;border-radius:7px;object-fit:cover;object-position:top;border:2px solid var(--yuzey)}
+.st-yuzler img{flex:none}
+.st-yuzler img+img{margin-left:var(--ust-uste,0)}
+.st-satir .ad{font-weight:600}
+.st-satir small{display:block;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-satir .sonuc-win{color:var(--yesil);font-weight:600}
+.st-yol-mini small{text-align:right}
+.st-cubuk{height:5px;border-radius:99px;background:var(--yuzey2);overflow:hidden;margin-top:3px}
+.st-cubuk i{display:block;height:100%;border-radius:99px;background:var(--soluk)}
+.st-cubuk.win i{background:var(--yesil)}
+.st-sure{white-space:nowrap;text-align:right;font-size:12px;color:var(--soluk);font-variant-numeric:tabular-nums}
+.st-kisi{padding:6px 0;border-top:1px solid var(--cizgi)}
+.st-kisi:first-of-type{border-top:0;padding-top:0}
+.st-kisi>div:first-child{display:flex;align-items:center;gap:6px}
+.st-kisi button{border:0;background:none;padding:0;text-align:left}
+.st-kisi .ad{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-kisi.secili .ad{color:var(--vurgu)}
+.st-kalem{color:var(--soluk);opacity:0;display:flex}
+.st-kisi:hover .st-kalem,.st-kalem:focus-visible{opacity:1}
+.st-kisi small{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.st-bos{max-width:520px;margin:12vh auto}
+.popup.genis .popup-ic{padding:18px 22px 28px}
+.st-ust{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.st-ust b{font-size:24px;line-height:1.2}
+.st-ust b.win{color:var(--yesil)}
+.st-ust>span{color:var(--soluk)}
+.st-oyuncular{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.st-oyuncular button{display:flex;align-items:center;gap:8px;border:1px solid var(--cizgi);border-radius:10px;background:none;padding:5px 12px 5px 5px;font-weight:600;text-align:left}
+.st-oyuncular button.secili{border-color:var(--vurgu);box-shadow:0 0 0 1px var(--vurgu)}
+.st-oyuncular img{width:30px;height:38px;border-radius:6px;object-fit:cover;object-position:top}
+.st-oyuncular small{display:block;font-weight:400}
+.st-ozet{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;margin-bottom:18px}
+.st-ozet div{background:var(--yuzey2);border-radius:10px;padding:8px 12px}
+.st-ozet b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.st-ozet small{font-size:11px}
+.st-baslik{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--soluk)}
+.st-baslik small{font-weight:400;letter-spacing:0;text-transform:none}
+.st-yol{display:flex;align-items:stretch;gap:2px;height:44px}
+.st-rozetler{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.st-rozet{position:relative;width:64px;height:64px;background:var(--cerceve) center/contain no-repeat;cursor:default}
+.st-rozet>img{width:100%;height:100%;object-fit:contain;display:block}
+.st-rozet.bronze{--rozet:#d59a63;--cerceve:url(https://cdn.spire-codex.com/badges/badge_bronze.png)}
+.st-rozet.silver{--rozet:#c9d3dc;--cerceve:url(https://cdn.spire-codex.com/badges/badge_silver.png)}
+.st-rozet.gold{--rozet:#ecc14b;--cerceve:url(https://cdn.spire-codex.com/badges/badge_gold.png)}
+.st-rozet.plain{--rozet:var(--vurgu)}
+.st-rozet:hover{transform:scale(1.08)}
+.st-rozet>span{position:absolute;z-index:2;left:0;top:calc(100% + 6px);width:max-content;max-width:240px;padding:8px 11px;border-radius:8px;background:#141414;border:1px solid #3a3a3a;box-shadow:0 6px 20px rgba(0,0,0,.5);color:#ddd;font-size:12px;line-height:1.35;opacity:0;pointer-events:none;transition:opacity .1s}
+.st-rozet>span b{display:block;color:var(--rozet);font-size:13px;margin-bottom:2px}
+.st-rozet:hover>span{opacity:1}
+.st-rozetler.yazi .st-rozet{width:auto;height:auto;padding:4px 10px;border-radius:99px;background:color-mix(in srgb,var(--rozet) 18%,transparent);color:var(--rozet);font-size:12px;font-weight:600}
+.st-tur{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px}
+.st-tur .st-kart{flex:0 0 92px}
+.st-kat{flex:1;min-width:0;display:flex;align-items:flex-end;border-radius:3px;background:var(--yuzey2);overflow:hidden}
+.st-kat.yeni{margin-left:8px}
+.st-kat i{display:block;width:100%;background:var(--oda)}
+.st-kat:hover{outline:2px solid var(--metin);outline-offset:1px}
+.st-ipucu{min-height:20px;margin:6px 0 2px;font-size:13px;font-variant-numeric:tabular-nums}
+.st-lejant{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--soluk);margin-bottom:20px}
+.st-lejant span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;background:var(--oda)}
+.st-kalintilar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+.st-kalintilar img{width:44px;height:44px;object-fit:contain}
+.st-kalintilar span{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--yuzey2);color:var(--soluk);align-self:center}
+.st-deste{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px 6px;margin-bottom:20px}
+.st-kart{position:relative;aspect-ratio:400/520;display:flex;align-items:center;justify-content:center}
+.st-kart img{width:100%;height:100%;object-fit:contain;display:block}
+.st-kart span{border:1px solid var(--cizgi);border-radius:10px;background:var(--yuzey2);padding:10px;width:82%;height:78%;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:600;font-size:13px}
+.st-ad-form{display:flex;gap:8px;padding:8px}
+.st-ad-form input{flex:1;min-width:0;font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--cizgi);background:var(--yuzey2);color:var(--metin)}
+@media (max-width:1040px){.st-duzen{grid-template-columns:minmax(0,1fr)}.st-yan{position:static;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.st-sayilar{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){main{padding:14px 16px 40px}.st-satir{grid-template-columns:auto minmax(0,1fr) auto}.st-yol-mini{display:none}.popup.genis .popup-ic{padding:14px}.st-deste{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.st-kat.yeni{margin-left:4px}.st-yol{gap:1px}}
+.st-kart img{cursor:zoom-in}
+.st-buyuk{border:0;padding:0;background:none;max-width:none;max-height:none;overflow:visible;cursor:zoom-out;outline:none}
+.st-buyuk[open]{display:flex;flex-direction:column;align-items:center}
+.st-buyuk::backdrop{background:rgba(0,0,0,.72)}
+.st-buyuk img{display:block;height:min(78vh,620px);width:auto;animation:st-buyu .14s ease-out}
+.st-buyuk p{margin:8px 0 0;text-align:center;color:#fff;font-weight:600}
+@keyframes st-buyu{from{transform:scale(.85);opacity:0}}
+</style>
+</head>
+<body>
+<main id="content"></main>
+<script src="/kit.js"></script>
+<script>
+"use strict";
+// Art comes from Spire Codex's CDN and belongs to Mega Crit; it is not stored here. With ART off the page shows text only.
+const ART = true;
+const CDN = "https://cdn.spire-codex.com";
+const PORTRAITS = new Set(["ironclad", "silent", "defect", "necrobinder", "regent"]);
+const MOST_FLOORS = 48, FORM_RUNS = 30;
+const PENCIL = svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 13);
+
+let data = null, names = null, loading = 0;
+const filter = { mode: "", character: "", person: "" };
+
+const portrait = (name) => {
+  const key = name.toLowerCase();
+  return ART && PORTRAITS.has(key) ? `<img src="${CDN}/characters/char_select_${key}.webp" alt="" title="${esc(name)}" loading="lazy" onerror="this.remove()">` : "";
+};
+const fallbackName = (id) => id.toLowerCase().split("_").filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+/** The name table is Turkish; other languages show the name made from the id. */
+const cardName = (id) => (LOCALE === "tr" && names?.cards[id]?.[0]) || fallbackName(id);
+const relicName = (id) => (LOCALE === "tr" && names?.relics[id]?.[0]) || fallbackName(id);
+const personName = (steamId) => data.names[steamId] || t("Player …{id}", { id: steamId.slice(-4) });
+const owner = (run) => run.players.find((p) => p.steamId && p.steamId === run.owner) ?? run.players[0];
+const ascension = (n) => (n < 0 ? "–" : `A${n}`);
+const resultClass = (run) => (run.inProgress ? "now" : run.win ? "win" : run.abandoned ? "left" : "lost");
+const resultText = (run) => t(run.inProgress ? "Playing" : run.win ? "Win" : run.abandoned ? "Left" : "Lost");
+
+function hoursText(minutes) {
+  const h = Math.floor(minutes / 60), m = minutes % 60;
+  return h ? t("{h} h {m} min", { h: formatNumber(h), m }) : t("{m} min", { m });
+}
+const dayText = (seconds) => new Date(seconds * 1000).toLocaleDateString(LOCALE, { day: "numeric", month: "long", year: "numeric" });
+
+function toolbarHtml() {
+  const tabs = [["", t("All")], ["solo", t("Solo")], ["coop", t("Co-op")]]
+    .map(([id, label]) => `<button type="button" data-mode="${id}" class="${filter.mode === id ? "secili" : ""}">${esc(label)}</button>`).join("");
+  const chip = (kind, label) => `<button type="button" class="st-secim" data-clear="${kind}">${esc(label)} ${ICON.close.replace(/width="16" height="16"/, 'width="12" height="12"')}</button>`;
+  return `<div class="st-arac"><div class="alt-sekmeler">${tabs}</div>
+    ${filter.character ? chip("character", filter.character) : ""}
+    ${filter.person ? chip("person", personName(filter.person)) : ""}
+    ${data.failed ? `<small class="soluk">${esc(t("{n} files could not be read.", { n: data.failed }))}</small>` : ""}</div>`;
+}
+
+function statsHtml() {
+  const { games, wins, abandoned, minutes, best } = data.totals, finished = games - abandoned;
+  const stat = (value, label) => `<div><b>${esc(value)}</b><small class="soluk">${esc(label)}</small></div>`;
+  return `<div class="st-sayilar">
+    ${stat(percent(wins, finished), t("{wins} wins, {lost} lost, {left} left", { wins, lost: finished - wins, left: abandoned }))}
+    ${stat(formatNumber(games), t("runs"))}
+    ${stat(hoursText(minutes), t("played, {average} a run", { average: hoursText(games ? Math.round(minutes / games) : 0) }))}
+    ${stat(ascension(best), t("highest Ascension won"))}
+  </div>`;
+}
+
+function formHtml() {
+  const recent = data.runs.slice(0, FORM_RUNS).reverse();
+  if (recent.length < 2) return "";
+  const square = (run) => `<button type="button" class="${resultClass(run)}" data-run="${esc(run.sourceKey)}" title="${esc(`${resultText(run)} · ${owner(run).character} ${ascension(run.ascension)}`)}" aria-label="${esc(resultText(run))}"></button>`;
+  return `<div class="st-form"><small class="soluk">${esc(t("Last {n} runs", { n: recent.length }))}</small><div>${recent.map(square).join("")}</div></div>`;
+}
+
+function charactersHtml() {
+  const tile = (c) => `<button type="button" class="st-karakter${filter.character === c.character ? " secili" : ""}" data-character="${esc(c.character)}">
+    ${portrait(c.character)}<div><b>${esc(c.character)}</b><strong>${esc(percent(c.wins, c.games))} <small class="soluk">${c.wins}/${c.games}</small></strong>
+    <small class="soluk">${esc(t("solo"))} ${ascension(c.bestSolo)} · ${esc(t("co-op"))} ${ascension(c.bestCoop)}</small></div></button>`;
+  return `<div class="st-karakterler">${data.characters.map(tile).join("")}</div>`;
+}
+
+function bar(share, kind = "") {
+  return `<div class="st-cubuk ${kind}"><i style="width:${Math.round(share * 100)}%"></i></div>`;
+}
+
+function peopleHtml() {
+  if (!data.people.length) return "";
+  const row = (p) => `<div class="st-kisi${filter.person === p.steamId ? " secili" : ""}"><div>
+      <button type="button" class="ad" data-person="${esc(p.steamId)}">${esc(personName(p.steamId))}</button>
+      <button type="button" class="st-kalem" data-rename="${esc(p.steamId)}" title="${esc(t("Rename"))}" aria-label="${esc(t("Rename"))}">${PENCIL}</button>
+      <small class="soluk">${p.wins}/${p.games} · ${ascension(p.best)}</small></div>${bar(p.games ? p.wins / p.games : 0)}</div>`;
+  return `<section class="kart"><h2>${esc(t("Played with"))}</h2>${data.people.map(row).join("")}</section>`;
+}
+
+function killersHtml() {
+  if (!data.killers.length) return "";
+  const most = data.killers[0].games;
+  const row = (k) => `<div class="st-kisi"><div><span class="ad">${esc(k.name)}</span><small class="soluk">${k.games}</small></div>${bar(k.games / most)}</div>`;
+  return `<section class="kart"><h2>${esc(t("Killed by most"))}</h2>${data.killers.map(row).join("")}</section>`;
+}
+
+function runRow(run) {
+  const me = owner(run);
+  const others = run.players.filter((p) => p !== me);
+  const named = others.filter((p) => p.steamId).map((p) => personName(p.steamId));
+  const outcome = run.win ? `<span class="sonuc-win">${esc(t("Win"))}</span>` : esc(run.killedBy ? (run.abandoned ? t("Left at {name}", { name: run.killedBy }) : run.killedBy) : resultText(run));
+  const mode = run.gameMode === "standard" ? "" : ` · ${esc(t(run.gameMode === "daily" ? "Daily" : "Custom"))}`;
+  return `<button type="button" class="st-satir ${resultClass(run)}" data-run="${esc(run.sourceKey)}">
+    <span class="st-yuzler" style="--ust-uste:${others.length ? Math.min(0, (62 - 34 * run.players.length) / others.length) : 0}px">${portrait(me.character)}${others.map((p) => portrait(p.character)).join("")}</span>
+    <span><span class="ad">${esc(me.character)}</span> <span class="soluk">${esc(ascension(run.ascension))}${named.length ? ` · ${esc(t("with {names}", { names: named.join(", ") }))}` : ""}</span>
+      <small class="soluk">${outcome}${mode}</small></span>
+    <span class="st-yol-mini">${run.floors ? `<small class="soluk">${esc(t("floor {n}", { n: run.floors }))}</small>${bar(Math.min(1, run.floors / MOST_FLOORS), resultClass(run))}` : ""}</span>
+    <span class="st-sure">${esc(hoursText(run.duration))}</span>
+  </button>`;
+}
+
+/** The run the game is in the middle of: act, floor, HP and gold now, and the boss waiting at the end of the act. */
+function currentRow(run) {
+  const me = owner(run);
+  const others = run.players.filter((p) => p !== me);
+  const named = others.filter((p) => p.steamId).map((p) => personName(p.steamId));
+  const facts = [
+    t("Act {n}", { n: run.act }),
+    t("{hp}/{max} HP", { hp: me.hp, max: me.maxHp }),
+    t("{n} gold", { n: me.gold }),
+    run.boss ? t("boss: {name}", { name: run.boss }) : "",
+    t("saved {time}", { time: timeAgo(run.savedAt) }),
+  ].filter(Boolean).join(" · ");
+  return `<button type="button" class="st-satir now" data-run="${esc(run.sourceKey)}">
+    <span class="st-yuzler" style="--ust-uste:${others.length ? Math.min(0, (62 - 34 * run.players.length) / others.length) : 0}px">${portrait(me.character)}${others.map((p) => portrait(p.character)).join("")}</span>
+    <span><span class="ad">${esc(me.character)}</span> <span class="soluk">${esc(ascension(run.ascension))}${named.length ? ` · ${esc(t("with {names}", { names: named.join(", ") }))}` : ""}</span>
+      <small class="soluk"><span class="sonuc-now">${esc(t("Playing"))}</span> · ${esc(facts)}</small></span>
+    <span class="st-yol-mini">${run.floors ? `<small class="soluk">${esc(t("floor {n}", { n: run.floors }))}</small>${bar(Math.min(1, run.floors / MOST_FLOORS), "now")}` : ""}</span>
+    <span class="st-sure">${esc(hoursText(run.duration))}</span>
+  </button>`;
+}
+
+function currentHtml() {
+  if (!data.current?.length) return "";
+  return `<section class="kart st-simdi"><h2>${esc(t("Playing now"))}</h2>${data.current.map(currentRow).join("")}</section>`;
+}
+
+function runsHtml() {
+  if (!data.runs.length) return `<section class="kart"><p class="bos">${esc(t("No runs match."))}</p></section>`;
+  const days = Map.groupBy(data.runs, (run) => dayText(run.startTime));
+  const parts = [...days].map(([day, runs]) => {
+    const wins = runs.filter((r) => r.win).length, minutes = runs.reduce((sum, r) => sum + r.duration, 0);
+    return `<div class="st-gun"><span>${esc(day)}</span><small class="soluk">${esc(t("{wins}/{n} won · {time}", { wins, n: runs.length, time: hoursText(minutes) }))}</small></div>${runs.map(runRow).join("")}`;
+  });
+  return `<section class="kart">${parts.join("")}</section>`;
+}
+
+function draw() {
+  if (data.not_found) {
+    $("#content").innerHTML = `<section class="kart st-bos"><h2>${esc(t("No save folder found"))}</h2>
+      <p class="soluk">${esc(t("Looked in {folder}. If the game keeps its saves elsewhere, set the folder in Settings.", { folder: data.folder }))}</p>
+      <button type="button" class="yz-dugme" onclick="parent.openApplet?.('settings')">${esc(t("Go to Settings"))}</button></section>`;
+    return;
+  }
+  if (!data.total) {
+    $("#content").innerHTML = `${currentHtml()}<section class="kart st-bos"><h2>${esc(t("No runs yet"))}</h2><p class="soluk">${esc(t("Finish a run and it shows up here."))}</p></section>`;
+    return;
+  }
+  $("#content").innerHTML = `${toolbarHtml()}${currentHtml()}${statsHtml()}${formHtml()}${charactersHtml()}
+    <div class="st-duzen">${runsHtml()}<div class="st-yan">${peopleHtml()}${killersHtml()}</div></div>`;
+}
+
+// —— one run ———————————————————————————————————————————————————
+const ROOMS = { monster: "Monster", elite: "Elite", boss: "Boss", rest_site: "Rest site", shop: "Shop", event: "Event", treasure: "Treasure", ancient: "Ancient" };
+const roomLabel = (type) => t(ROOMS[type] || "Unknown");
+
+function floorsHtml(player) {
+  const top = Math.max(1, ...player.floors.map((f) => f.maxHp));
+  const seen = new Set(player.floors.map((f) => f.type));
+  const column = (f, i) => {
+    const room = [roomLabel(f.type), f.name].filter(Boolean).join(": ");
+    const tip = [t("floor {n}", { n: f.floor }), room, t("{hp}/{max} HP", { hp: f.hp, max: f.maxHp }), f.damage ? t("{n} damage", { n: f.damage }) : "", f.turns ? t("{n} turns", { n: f.turns }) : ""].filter(Boolean).join(" · ");
+    const newAct = i && player.floors[i - 1].act !== f.act;
+    return `<div class="st-kat${newAct ? " yeni" : ""}" data-tip="${esc(tip)}"><i style="height:${Math.round((f.hp / top) * 100)}%;--oda:var(--oda-${esc(f.type)},var(--gri))"></i></div>`;
+  };
+  return `<h3 class="st-baslik">${esc(t("Health by floor"))}</h3>
+    <div class="st-yol">${player.floors.map(column).join("")}</div>
+    <div class="st-ipucu soluk" data-tip-out>${esc(t("Point at a floor for what happened there."))}</div>
+    <div class="st-lejant">${Object.keys(ROOMS).filter((type) => seen.has(type)).map((type) => `<span style="--oda:var(--oda-${type})">${esc(roomLabel(type))}</span>`).join("")}</div>`;
+}
+
+function relicsHtml(player) {
+  const one = ({ id, floor }) => {
+    const file = names?.relics[id]?.[1], title = `${relicName(id)} · ${t("floor {n}", { n: floor })}`;
+    return ART && file ? `<img src="${CDN}/relics/${esc(file)}.webp" alt="${esc(relicName(id))}" title="${esc(title)}" loading="lazy">` : `<span title="${esc(title)}">${esc(relicName(id))}</span>`;
+  };
+  return `<h3 class="st-baslik">${esc(t("Relics"))} <small>${player.relics.length}</small></h3><div class="st-kalintilar">${player.relics.map(one).join("")}</div>`;
+}
+
+const cardImage = (id, up) => `${CDN}/cards-full/stable/${id.toLowerCase()}${up ? "_upg" : ""}.webp`;
+/** A card without an upgraded picture falls back to the plain one, and one without any to its name. */
+function cardFailed(img) {
+  if (img.dataset.plain) {
+    const src = img.dataset.plain;
+    delete img.dataset.plain;
+    img.src = src;
+    return;
+  }
+  const tile = document.createElement("span");
+  tile.textContent = img.alt;
+  img.replaceWith(tile);
+}
+
+function cardHtml(c, withFloor = true) {
+  const name = `${cardName(c.id)}${c.up ? "+" : ""}`;
+  const title = withFloor ? `${name} · ${t("floor {n}", { n: c.floor })}` : name;
+  const face = ART
+    ? `<img src="${cardImage(c.id, c.up)}" ${c.up ? `data-plain="${cardImage(c.id, 0)}"` : ""} alt="${esc(name)}" loading="lazy" onerror="cardFailed(this)">`
+    : `<span>${esc(name)}</span>`;
+  return `<div class="st-kart" title="${esc(title)}">${face}</div>`;
+}
+
+function deckHtml(player) {
+  // the file keeps the order the cards were taken in, which is how the game shows a deck
+  return `<h3 class="st-baslik">${esc(t("Deck"))} <small>${player.deck.length}</small></h3><div class="st-deste">${player.deck.map((c) => cardHtml(c)).join("")}</div>`;
+}
+
+/** The game's own awards for the run, coloured by tier; the description is on hover. */
+function badgesHtml(player) {
+  if (!player.badges?.length) return "";
+  const one = (key) => {
+    // the file gives every badge a rarity; only a tiered one has a name per tier
+    const [id] = key.split(".");
+    const [title, about] = (names?.badges?.[key] ?? names?.badges?.[id])?.[LOCALE === "tr" ? "tr" : "en"] ?? [fallbackName(id), ""];
+    // as in the game: the tier's frame with the badge's picture on it, the name and what it means on hover
+    const tip = `<span><b>${esc(title)}</b>${esc(about)}</span>`;
+    return ART
+      ? `<div class="st-rozet ${esc(key.split(".")[1] || "plain")}" aria-label="${esc(title)}"><img src="${CDN}/badges/badge_${esc(id.toLowerCase())}.png" alt="${esc(title)}" loading="lazy">${tip}</div>`
+      : `<div class="st-rozet ${esc(key.split(".")[1] || "plain")}" title="${esc(about)}">${esc(title)}</div>`;
+  };
+  return `<h3 class="st-baslik">${esc(t("Badges"))}</h3><div class="st-rozetler${ART ? "" : " yazi"}">${player.badges.map(one).join("")}</div>`;
+}
+
+/** The turn with the most cards played, card by card: the combo worth showing a friend. */
+function bestTurnHtml(player) {
+  const best = player.plays?.best;
+  if (!best || best.n < 2) return "";
+  const fight = fallbackName(best.fight.replace(/_(NORMAL|ELITE|BOSS|WEAK|STRONG)$/, ""));
+  return `<h3 class="st-baslik">${esc(t("Biggest turn"))} <small>${esc(t("{n} cards against {fight}", { n: best.n, fight }))}</small></h3>
+    <div class="st-tur">${best.cards.map((id) => cardHtml({ id, up: 0 }, false)).join("")}</div>`;
+}
+
+function playerHtml(player, run) {
+  const { damage, dealt, healed, goldGained, goldSpent, upgrades, removed, potions } = player.totals;
+  const last = player.floors.at(-1);
+  const box = (value, label) => `<div><b>${esc(value)}</b><small class="soluk">${esc(label)}</small></div>`;
+  const [favourite, times] = player.plays?.top?.[0] ?? [];
+  return `${badgesHtml(player)}<div class="st-ozet">
+    ${player.plays ? box(formatNumber(player.plays.played), t("cards played")) : ""}${favourite ? box(`${cardName(favourite)} ×${times}`, t("played most")) : ""}
+    ${box(player.deck.length, t("cards"))}${box(upgrades, t("upgrades"))}${box(removed, t("cards removed"))}
+    ${dealt != null ? box(formatNumber(dealt), run.dealtFloor < run.floors ? t("damage dealt to floor {n}", { n: run.dealtFloor }) : t("damage dealt")) : ""}${box(formatNumber(damage), t("damage taken"))}${box(formatNumber(healed), t("healed"))}
+    ${last ? box(last.maxHp, t("max HP")) : ""}${box(formatNumber(goldGained), t("gold earned"))}${box(formatNumber(goldSpent), t("gold spent"))}${box(potions, t("potions used"))}
+  </div>${bestTurnHtml(player)}${relicsHtml(player)}${deckHtml(player)}${player.floors.length ? floorsHtml(player) : ""}`;
+}
+
+async function openRun(key) {
+  const popup = openPopup({ title: t("Run"), wide: true, body: `<p class="soluk">${esc(t("Loading…"))}</p>` });
+  try {
+    names ??= await getJson("./api/names");
+    const run = await getJson(`./api/run?key=${encodeURIComponent(key)}`);
+    let shown = run.players.indexOf(owner(run));
+    popup.element.querySelector(".popup-bas h2").textContent = `${dayText(run.startTime)} · ${ascension(run.ascension)}`;
+    const body = () => {
+      const tabs = run.players.length < 2 ? "" : `<div class="st-oyuncular">${run.players.map((p, i) => `<button type="button" class="${i === shown ? "secili" : ""}" data-player="${i}">${portrait(p.character)}<span>${esc(p.character)}<small class="soluk">${esc(p.steamId && p.steamId !== run.owner ? personName(p.steamId) : t("You"))}</small></span></button>`).join("")}</div>`;
+      const where = run.inProgress ? [t("Act {n}", { n: run.act }), run.boss ? t("boss: {name}", { name: run.boss }) : ""] : [];
+      const facts = [hoursText(run.duration), run.floors ? t("floor {n}", { n: run.floors }) : "", ...where, run.seed, run.build].filter(Boolean).join(" · ");
+      const headline = run.win ? t("Win") : run.killedBy ? `${resultText(run)} · ${run.killedBy}` : resultText(run);
+      return `<div class="st-ust"><b class="${resultClass(run)}">${esc(headline)}</b><span>${esc(facts)}</span></div>${tabs}${playerHtml(run.players[shown], run)}`;
+    };
+    popup.setBody(body());
+    popup.element.addEventListener("click", (e) => {
+      const next = e.target.closest("[data-player]")?.dataset.player;
+      if (next !== undefined) { shown = +next; popup.setBody(body()); }
+    });
+    popup.element.addEventListener("mouseover", (e) => {
+      const tip = e.target.closest("[data-tip]")?.dataset.tip;
+      const out = popup.element.querySelector("[data-tip-out]");
+      if (out && tip) { out.textContent = tip; out.classList.remove("soluk"); }
+    });
+  } catch (e) {
+    popup.setBody(`<p class="bos">${esc(e.message)}</p>`);
+  }
+}
+
+function renamePerson(steamId) {
+  const popup = openPopup({
+    title: t("Who is this?"),
+    body: `<form class="st-ad-form"><input value="${esc(data.names[steamId] || "")}" placeholder="${esc(personName(steamId))}" maxlength="60" autofocus><button type="submit" class="yz-dugme">${esc(t("Save"))}</button></form>`,
+  });
+  popup.element.querySelector("form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const r = await fetch("./api/person", { method: "POST", headers: { "X-Panel": "1", "Content-Type": "application/json" }, body: JSON.stringify({ steamId, name: e.target.querySelector("input").value }) });
+    if (!r.ok) return notify(t("Could not save."));
+    popup.close();
+    load();
+  });
+}
+
+$("#content").addEventListener("click", (e) => {
+  const hit = (name) => e.target.closest(`[data-${name}]`)?.dataset[name];
+  const run = hit("run"), rename = hit("rename"), clear = hit("clear");
+  const mode = hit("mode"), character = hit("character"), person = hit("person");
+  if (run) return void openRun(run);
+  if (rename) return renamePerson(rename);
+  if (clear) filter[clear] = "";
+  else if (mode !== undefined) filter.mode = mode;
+  else if (character) filter.character = filter.character === character ? "" : character;
+  else if (person) filter.person = filter.person === person ? "" : person;
+  else return;
+  load();
+});
+
+async function load() {
+  const ticket = ++loading;
+  try {
+    const next = await getJson(`./api/runs?${new URLSearchParams(Object.entries(filter).filter(([, value]) => value))}`);
+    if (ticket !== loading) return;
+    data = next;
+    const scroll = scrollY;
+    draw();
+    scrollTo(0, scroll);
+  } catch (e) {
+    $("#content").innerHTML = `<section class="kart st-bos"><p class="bos">${esc(e.message)}</p></section>`;
+  }
+}
+window.addEventListener("focus", () => { if (!isHidden()) load(); });
+// while a run is being played the game saves it after every room; nothing is asked when there is none or the applet is hidden
+// A card opens large over everything, as in the game; any click or Escape closes it.
+document.addEventListener("click", (e) => {
+  const img = e.target.closest(".st-kart img");
+  if (!img) return;
+  const big = document.createElement("dialog");
+  big.className = "st-buyuk";
+  big.innerHTML = `<img src="${esc(img.currentSrc || img.src)}" alt="${esc(img.alt)}"><p>${esc(img.closest(".st-kart").title)}</p>`;
+  big.addEventListener("click", () => big.close());
+  big.addEventListener("close", () => big.remove());
+  document.body.append(big);
+  big.showModal();
+});
+
+setInterval(() => { if (data?.current?.length && !isHidden() && !document.querySelector(".popup[open]")) load(); }, 20000);
+load();
+</script>
+</body>
+</html>

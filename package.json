@@ -7,6 +7,6 @@
   "type": "module",
   "bin": { "speys-local": "bin/speys-local.js" },
   "files": ["bin"],
-  "scripts": { "start": "node start.js", "test": "node --test \"core/**/*.test.js\" \"applets/official/**/*.test.js\"" },
+  "scripts": { "start": "node start.js", "test": "node --test \"core/**/*.test.js\" \"applets/store/**/*.test.js\"" },
   "engines": { "node": ">=24" }
 }

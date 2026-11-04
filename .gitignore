@@ -1,7 +1,7 @@
 applets/custom/
-applets/store/
 node_modules/
 .DS_Store
 data
+data.*
 CLAUDE.local.md
 *.local.md

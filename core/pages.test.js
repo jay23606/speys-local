@@ -7,7 +7,7 @@ import { Script } from "node:vm";
 const ROOT = join(import.meta.dirname, "..");
 const pages = [
   ...readdirSync(join(ROOT, "core")).filter((f) => f.endsWith(".html")).map((f) => join("core", f)),
-  ...readdirSync(join(ROOT, "applets", "official")).map((id) => join("applets", "official", id, "index.html"))
+  ...readdirSync(join(ROOT, "applets", "store")).map((id) => join("applets", "store", id, "index.html"))
     .filter((f) => statSync(join(ROOT, f), { throwIfNoEntry: false })?.isFile()),
 ];
 

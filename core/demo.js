@@ -3,6 +3,7 @@
 import { mkdirSync, utimesSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { LEGACY } from "./store.js";
 
 const DAY = 86400;
 const pad = (n) => String(n).padStart(2, "0");
@@ -131,7 +132,7 @@ function seedCrm(dir) {
 }
 
 async function seedLedger(dir, root) {
-  const { emptyLedger, saveEntry } = await import(pathToFileURL(join(root, "applets", "official", "kasa", "ledger.js")).href);
+  const { emptyLedger, saveEntry } = await import(pathToFileURL(join(root, "applets", "store", "kasa", "ledger.js")).href);
   const ledger = emptyLedger(), today = new Date();
   const inMonth = (day) => iso(new Date(today.getFullYear(), today.getMonth(), Math.min(day, today.getDate())));
   for (const [direction, title, amount, category, day] of [
@@ -170,7 +171,7 @@ function seedHabits(dir) {
   });
 }
 
-/** Writes the whole demo into a workspace folder. `disabled` hides this computer's own applets in the demo. */
+/** Writes the whole demo into a workspace folder: the applets it has data for are installed, and `disabled` hides this computer's own. */
 export async function seedDemo(dir, { disabled = [], language } = {}) {
   const root = resolve(import.meta.dirname, "..");
   mkdirSync(dir, { recursive: true });
@@ -181,7 +182,7 @@ export async function seedDemo(dir, { disabled = [], language } = {}) {
   const social = seedSocial(dir);
   seedHabits(dir);
   writeJson(join(dir, "settings.json"), {
-    _dashboard: { disabled, autoUpdateCheck: false, ...(language ? { language } : {}) },
+    _dashboard: { installed: LEGACY, disabled, autoUpdateCheck: false, ...(language ? { language } : {}) },
     tasks: { projects },
     claude: { folders: [{ path: claude, label: "Claude" }], projectsRoot: join(dir, "projects") },
     yazim: { claudeFolders: [claude] },

@@ -1,0 +1,31 @@
+{
+  "name": "SEO",
+  "description": "Daily SEO task, post checks, Search Console and search preview.",
+  "category": "Marketing",
+  "reads": "Your sites' files; Search Console and validator.schema.org when you use them",
+  "icon": "icon.svg",
+  "order": 36,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "sites",
+      "label": "Sites",
+      "hint": "The first one shows in Today. Each site: id, name, domain; optionally property, file (daily task and ideas; if empty data/seo/<id>.json), blogFolder (each post in its own folder as post.md), reportsFolder (kontrol-*.md), project and list (SEO task list)",
+      "type": "json"
+    },
+    {
+      "section": "searchConsole",
+      "key": "folder",
+      "label": "Search Console credentials folder",
+      "hint": "search-console-istemci.json and search-console-belirtec.json go here. If empty, data/apps/seo",
+      "type": "path"
+    },
+    {
+      "section": "searchConsole",
+      "key": "cacheFile",
+      "label": "Search Console cache",
+      "type": "path",
+      "placeholder": "default: data/apps/seo/search-console.json"
+    }
+  ]
+}

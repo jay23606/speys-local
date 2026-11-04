@@ -1,0 +1,17 @@
+{
+  "name": "Claude Wrapped",
+  "description": "Your month with Claude Code in numbers, and a card to share.",
+  "category": "Claude Code",
+  "reads": "Your Claude Code session logs (~/.claude)",
+  "icon": "icon.svg",
+  "order": 24,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "folders",
+      "label": "Claude folders",
+      "hint": "If empty, ~/.claude, CLAUDE_CONFIG_DIR and any ~/.claude-* folder with sessions, e.g. [\"~/.claude\"]",
+      "type": "json"
+    }
+  ]
+}

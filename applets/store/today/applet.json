@@ -1,0 +1,19 @@
+{
+  "name": "Today",
+  "description": "Your day on one screen: tasks, Claude sessions, follow-ups, money and habits.",
+  "category": "Productivity",
+  "reads": "The numbers of your other installed applets",
+  "preinstalled": true,
+  "icon": "icon.svg",
+  "order": 1,
+  "dashboard": true,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "habitsFile",
+      "label": "Habits file",
+      "hint": "If empty, data/apps/today/habits.json",
+      "type": "path"
+    }
+  ]
+}

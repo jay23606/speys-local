@@ -48,6 +48,6 @@ test("the check is on by default and can go off; nothing asks before a check", a
 
   assert.equal((await setAuto(false)).status, 200);
   assert.equal((await status()).autoCheck, false);
-  const settings = JSON.parse(readFileSync(join(home, ".speys-local", "main", "settings.json"), "utf8"));
+  const settings = JSON.parse(readFileSync(join(home, ".speys-local", "settings.json"), "utf8"));
   assert.equal(settings._dashboard.autoUpdateCheck, false);
 });

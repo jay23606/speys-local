@@ -1,0 +1,14 @@
+{
+  "Learn from your own code: your lessons, a map of your code and daily questions.": "Kendi kodundan öğren: derslerin, kodunun haritası ve günlük sorular.",
+  "Repo to scan": "Taranan repo",
+  "Lessons and questions come from this code": "Ders ve sorular bu kodun içinden çıkar",
+  "Which of your code do you want to learn from?": "Hangi kodundan öğrenmek istiyorsun?",
+  "Write the repo's folder path. The code never leaves this computer.": "Reponun klasör yolunu yaz. Kod bu bilgisayardan çıkmaz.",
+  "/Users/you/Projects/backend": "/Users/sen/Projeler/backend",
+  "Scan": "Tara",
+  "Folder not found: {root}": "Klasör bulunamadı: {root}",
+  "This folder has no supported files ({names}).": "Bu klasörde desteklenen dosya yok ({names}).",
+  "The folder path is empty.": "Klasör yolu boş.",
+  "Learning": "Öğrenme",
+  "The repository you point it to": "Gösterdiğin depo"
+}

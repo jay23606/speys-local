@@ -1,0 +1,25 @@
+{
+  "name": "Typo Check",
+  "description": "The keyboard errors you make writing to Claude, and practice built for them.",
+  "category": "Claude Code",
+  "reads": "What you typed to Claude Code, from its session logs",
+  "icon": "icon.svg",
+  "order": 30,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "dataFolder",
+      "label": "Data folder",
+      "hint": "Analysis results and practice sessions",
+      "type": "path",
+      "placeholder": "default: data/yazim"
+    },
+    {
+      "key": "claudeFolders",
+      "label": "Claude folders",
+      "hint": "Folders the messages are read from, e.g. [\"~/.claude\"]",
+      "type": "json",
+      "placeholder": "default: ~/.claude (and CLAUDE_CONFIG_DIR if set)"
+    }
+  ]
+}

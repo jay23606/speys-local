@@ -16,9 +16,8 @@ Run `npm test` before opening a pull request and put the result in its descripti
 |---|---|---|
 | `core/` | applet discovery, sidebar, Settings, `kit.js`, `kit.css` | yes |
 | `lib/` | helpers shared by backends | yes |
-| `applets/official/<id>/` | applets that ship to everyone | yes |
-| `applets/store/<id>/` | applets installed from the Store | no |
-| `applets/custom/<id>/` | applets on this computer only; a copy with the same id replaces an official one | no |
+| `applets/store/<id>/` | every applet that ships to everyone; each is listed in the Store and shows up once installed | yes |
+| `applets/custom/<id>/` | applets on this computer only; a copy with the same id replaces the Store one | no |
 | `data/` | settings and applet data | no |
 
 An applet never imports another applet or `core/`; shared code goes in `lib/`. Applets may call each other over
@@ -31,8 +30,13 @@ Personal data never goes in the repo. Paths, names and accounts belong in settin
 
 | field | meaning |
 |---|---|
-| `name`, `description` | name and tooltip in the sidebar |
+| `name`, `description` | name and tooltip in the sidebar, and its card in the Store |
 | `icon` | an SVG file using `currentColor`; no star or sparkle icons |
+| `author` | who wrote it, shown in the Store; default `Speys` |
+| `category` | one word or two for the Store's filters, such as `Productivity` or `Games` |
+| `reads` | what it reads, and anything it loads from the network; shown before installing |
+| `platforms` | some of `macos`, `windows`, `linux`, when it doesn't run everywhere |
+| `preinstalled` | `true` installs it in a new workspace; keep this for the few everyone needs |
 | `order` | position, lower is higher |
 | `url` | a tool running at another address, opened in the frame |
 | `page` | the page of an applet without a backend, default `index.html` |
@@ -74,26 +78,18 @@ and skip it when `isHidden()`.
 
 ## Store
 
-Anyone can write an applet; the maintainer approves every version before people can install it.
+Every applet in `applets/store/` is listed in the Store. Installing one only adds its id to the workspace's
+`_dashboard.installed` list in `settings.json`: nothing is downloaded, and an applet that isn't installed has no page
+and runs no code. Applets update together with Speys Local, when the user clicks.
 
-1. Put the applet in its own public GitHub repository, with `applet.json` at the top.
-2. Open a pull request adding it to `store.json`:
+To add yours:
 
-```json
-{
-  "id": "my-notes",
-  "name": "My notes",
-  "description": "One sentence about what it does.",
-  "author": "your-github-name",
-  "version": "1.0.0",
-  "repo": "https://github.com/you/my-notes",
-  "commit": "the full 40-character hash of this version"
-}
-```
+1. Write it in `applets/custom/<id>/` and use it for a while.
+2. Move it to `applets/store/<id>/`, fill in `author`, `category` and `reads` in `applet.json` (see above), and put
+   one to three PNG screenshots taken with made-up data in `screenshots/`, shown in name order.
+3. Open a pull request. The code is reviewed line by line; once merged, everyone sees it in the Store.
 
-3. The code at that commit gets reviewed. Once merged, people see it in the Store.
-
-A new version is a new pull request changing `version` and `commit`, and it is reviewed the same way. Installs take exactly that commit, updates only happen when the user clicks, and nothing from the download is run at install time. Symlinks and paths pointing outside the applet are refused.
+A change to it later is a pull request too, reviewed the same way.
 
 Applets have no sandbox: a backend runs with the user's permissions, and pages share one address. Review with that in mind, and don't accept minified code you can't read.
 

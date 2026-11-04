@@ -1,0 +1,17 @@
+{
+  "name": "OwnLearn",
+  "description": "Learn from your own code: your lessons, a map of your code and daily questions.",
+  "category": "Learning",
+  "reads": "The repository you point it to",
+  "icon": "icon.svg",
+  "order": 50,
+  "backend": "backend.js",
+  "settings": [
+    {
+      "key": "repo",
+      "label": "Repo to scan",
+      "hint": "Lessons and questions come from this code",
+      "type": "path"
+    }
+  ]
+}

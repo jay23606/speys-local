@@ -43,7 +43,32 @@ after(() => {
   rmSync(home, { recursive: true, force: true });
 });
 
-const ids = readdirSync(join(ROOT, "applets", "official"), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+const ids = readdirSync(join(ROOT, "applets", "store"), { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+const preinstalled = ids.filter((id) => JSON.parse(readFileSync(join(ROOT, "applets", "store", id, "applet.json"), "utf8")).preinstalled);
+const store = (path, id) => fetch(`${BASE}/api/store/${path}`, { method: "POST", headers: { "X-Panel": "1", "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
+
+test("a new install starts with the preinstalled applets; the others wait in the Store with no page", async () => {
+  const shown = (await (await fetch(`${BASE}/api/applets`)).json()).filter((a) => a.enabled && a.visibility === "store").map((a) => a.id);
+  assert.deepEqual(shown.sort(), [...preinstalled].sort());
+  const listed = (await (await fetch(`${BASE}/api/store`)).json()).applets;
+  assert.deepEqual(listed.map((a) => a.id).sort(), [...ids].sort());
+  assert.equal(listed.find((a) => a.id === "crm").installed, false);
+  assert.equal((await fetch(`${BASE}/a/crm/api/crm`)).status, 404);
+  assert.equal((await store("install", "../x")).status, 400);
+  assert.equal((await store("install", "crm")).status, 200);
+  assert.equal((await fetch(`${BASE}/a/crm/api/crm`)).status, 200);
+  assert.equal((await store("remove", "crm")).status, 200);
+  assert.equal((await fetch(`${BASE}/a/crm/api/crm`)).status, 404);
+  for (const id of ids) assert.equal((await store("install", id)).status, 200, id);
+});
+
+test("Store pictures are served, and nothing else from the applet's folder", async () => {
+  const today = await fetch(`${BASE}/store-media/today/1.png`);
+  assert.equal(today.headers.get("content-type"), "image/png");
+  for (const path of ["today/applet.json", "today/..%2Fapplet.json", "..%2Fpackage.json/1.png", "nope/1.png"]) {
+    assert.equal((await fetch(`${BASE}/store-media/${path}`)).status, 404, path);
+  }
+});
 
 for (const id of ids) {
   test(`${id}: page opens`, async () => {
@@ -114,7 +139,7 @@ test("office furniture is saved, and only known items", async () => {
 });
 
 test("no personal paths in the code", () => {
-  const paths = ["core/server.js", "applets/official/claude/backend.js", "applets/official/yazim/analyze.js", "applets/official/seo/backend.js", "applets/official/today/backend.js"];
+  const paths = ["core/server.js", "applets/store/claude/backend.js", "applets/store/yazim/analyze.js", "applets/store/seo/backend.js", "applets/store/today/backend.js"];
   for (const p of paths) {
     const text = readFileSync(join(ROOT, p), "utf8");
     assert.doesNotMatch(text, /\/Users\/|\.claude-2|Speys Ltd/, p);
